@@ -23,19 +23,35 @@ import "@babylonjs/core/Loading/Plugins/babylonFileLoader";
 import "@babylonjs/core/Materials";
 import "@babylonjs/loaders/glTF/glTFFileLoader";
 
-import {Engine, Nullable, ArcRotateCamera, Vector3, Quaternion} from "@babylonjs/core";
+import {
+    Engine,
+    Nullable,
+    ArcRotateCamera,
+    Vector3,
+    Quaternion,
+} from "@babylonjs/core";
 
-import {FPS} from "@mediapipe/control_utils";
-import {Holistic, HolisticConfig, Results} from "@mediapipe/holistic";
+import { FPS } from "@mediapipe/control_utils";
+import { Holistic, HolisticConfig, Results } from "@mediapipe/holistic";
 
-import {Poses, poseWrapper} from "./worker/pose-processing";
-import {createScene, updateBuffer, updatePose, updateSpringBones} from "./core";
-import {createControlPanel, HolisticOptions, InitHolisticOptions, onResults, setHolisticOptions} from "./mediapipe";
-import {VRMManager} from "v3d-core/dist/src/importer/babylon-vrm-loader/src";
-import {V3DCore} from "v3d-core/dist/src";
-import {CloneableQuaternionMap} from "./helper/quaternion";
-import {CustomLoadingScreen} from "./helper/utils";
-
+import { Poses, poseWrapper } from "./worker/pose-processing";
+import {
+    createScene,
+    updateBuffer,
+    updatePose,
+    updateSpringBones,
+} from "./core";
+import {
+    createControlPanel,
+    HolisticOptions,
+    InitHolisticOptions,
+    onResults,
+    setHolisticOptions,
+} from "./mediapipe";
+import { VRMManager } from "v3d-core/dist/src/importer/babylon-vrm-loader/src";
+import { V3DCore } from "v3d-core/dist/src";
+import { CloneableQuaternionMap } from "./helper/quaternion";
+import { CustomLoadingScreen } from "./helper/utils";
 
 export interface HolisticState {
     ready: boolean;
@@ -62,7 +78,7 @@ export class V3DWeb {
     private boneState: BoneState = {
         boneRotations: null,
         bonesNeedUpdate: false,
-    }
+    };
     private _boneOptions: BoneOptions = {
         blinkLinkLR: true,
         expression: "Neutral",
@@ -71,7 +87,7 @@ export class V3DWeb {
         lockArm: false,
         lockLeg: false,
         resetInvisible: false,
-    }
+    };
     get boneOptions(): BoneOptions {
         return this._boneOptions;
     }
@@ -79,18 +95,20 @@ export class V3DWeb {
         this._boneOptions = value;
         this.workerPose?.updateBoneOptions(this._boneOptions);
     }
-    private readonly _updateBufferCallback = Comlink.proxy((data: Uint8Array) => {
-        updateBuffer(data, this.boneState)
-    });
+    private readonly _updateBufferCallback = Comlink.proxy(
+        (data: Uint8Array) => {
+            updateBuffer(data, this.boneState);
+        }
+    );
 
     private customLoadingScreen: Nullable<CustomLoadingScreen> = null;
 
     private _v3DCore: Nullable<V3DCore> = null;
-    get v3DCore(): Nullable<V3DCore>{
+    get v3DCore(): Nullable<V3DCore> {
         return this._v3DCore;
     }
     private _vrmManager: Nullable<VRMManager> = null;
-    get vrmManager(): Nullable<VRMManager>{
+    get vrmManager(): Nullable<VRMManager> {
         return this._vrmManager;
     }
     private readonly engine: Engine;
@@ -104,7 +122,7 @@ export class V3DWeb {
     private readonly holistic = new Holistic(this.holisticConfig);
     private holisticState: HolisticState = {
         ready: false,
-        activeEffect: 'mask',
+        activeEffect: "mask",
         holisticUpdate: false,
     };
     private _holisticOptions = Object.assign({}, InitHolisticOptions);
@@ -113,7 +131,12 @@ export class V3DWeb {
     }
     set holisticOptions(value: HolisticOptions) {
         this._holisticOptions = value;
-        setHolisticOptions(value, this.videoElement!, this.holisticState.activeEffect, this.holistic);
+        setHolisticOptions(
+            value,
+            this.videoElement!,
+            this.holisticState.activeEffect,
+            this.holistic
+        );
     }
 
     private _cameraList: MediaDeviceInfo[] = [];
@@ -122,28 +145,33 @@ export class V3DWeb {
     }
 
     constructor(
-        vrmFilePath:string,
+        vrmFilePath: string,
         public readonly videoElement?: Nullable<HTMLVideoElement>,
         public readonly webglCanvasElement?: Nullable<HTMLCanvasElement>,
         public readonly videoCanvasElement?: Nullable<HTMLCanvasElement>,
         public readonly controlsElement?: Nullable<HTMLDivElement>,
         private readonly holisticConfig?: HolisticConfig,
         private readonly loadingDiv?: Nullable<HTMLDivElement>,
-        afterInitCallback?: (...args : any[]) => any,
+        afterInitCallback?: (...args: any[]) => any
     ) {
         let globalInit = false;
         if (!this.videoElement || !this.webglCanvasElement) {
             globalInit = true;
-            this.videoElement =
-                document.getElementsByClassName('input_video')[0] as HTMLVideoElement;
-            this.videoCanvasElement =
-                document.getElementById('video-canvas') as HTMLCanvasElement;
-            this.webglCanvasElement =
-                document.getElementById('webgl-canvas') as HTMLCanvasElement;
-            this.controlsElement =
-                document.getElementsByClassName('control-panel')[0] as HTMLDivElement;
+            this.videoElement = document.getElementsByClassName(
+                "input_video"
+            )[0] as HTMLVideoElement;
+            this.videoCanvasElement = document.getElementById(
+                "video-canvas"
+            ) as HTMLCanvasElement;
+            this.webglCanvasElement = document.getElementById(
+                "webgl-canvas"
+            ) as HTMLCanvasElement;
+            this.controlsElement = document.getElementsByClassName(
+                "control-panel"
+            )[0] as HTMLDivElement;
         }
-        if (!this.videoElement || !this.webglCanvasElement) throw Error("Canvas or Video elements not found!");
+        if (!this.videoElement || !this.webglCanvasElement)
+            throw Error("Canvas or Video elements not found!");
 
         this._vrmFile = vrmFilePath;
 
@@ -158,8 +186,10 @@ export class V3DWeb {
         }
         // Loading screen
         if (this.loadingDiv) {
-            this.customLoadingScreen =
-                new CustomLoadingScreen(this.webglCanvasElement, this.loadingDiv);
+            this.customLoadingScreen = new CustomLoadingScreen(
+                this.webglCanvasElement,
+                this.loadingDiv
+            );
         }
         this.customLoadingScreen?.displayLoadingUI();
 
@@ -168,19 +198,26 @@ export class V3DWeb {
          */
         this.worker = new Worker(
             new URL("./worker/pose-processing", import.meta.url),
-            {type: 'module'});
+            { type: "module" }
+        );
         const posesRemote = Comlink.wrap<typeof poseWrapper>(this.worker);
         const Poses = new posesRemote.poses(
-            this.boneOptions, this._updateBufferCallback);
+            this.boneOptions,
+            this._updateBufferCallback
+        );
         Poses.then((v) => {
-            if (!v) throw Error('Worker start failed!');
+            if (!v) throw Error("Worker start failed!");
             this.workerPose = v;
 
             createScene(
-                this.engine, this.workerPose,
-                this.boneState, this.boneOptions,
-                this.holistic, this.holisticState,
-                this._vrmFile, this.videoElement!
+                this.engine,
+                this.workerPose,
+                this.boneState,
+                this.boneOptions,
+                this.holistic,
+                this.holisticState,
+                this._vrmFile,
+                this.videoElement!
             ).then((value) => {
                 if (!value) throw Error("VRM Manager initialization failed!");
 
@@ -198,19 +235,24 @@ export class V3DWeb {
                             /**
                              * MediaPipe
                              */
-                            const mainOnResults = (results: Results) => onResults(
-                                results,
-                                vrmManager,
-                                this.videoCanvasElement,
-                                this.workerPose!,
-                                this.holisticState.activeEffect,
-                                this._updateBufferCallback,
-                                this.fpsControl
-                            );
+                            const mainOnResults = (results: Results) =>
+                                onResults(
+                                    results,
+                                    vrmManager,
+                                    this.videoCanvasElement,
+                                    this.workerPose!,
+                                    this.holisticState.activeEffect,
+                                    this._updateBufferCallback,
+                                    this.fpsControl
+                                );
                             this.holistic.initialize().then(() => {
                                 // Set initial options
-                                setHolisticOptions(this.holisticOptions, this.videoElement!,
-                                    this.holisticState.activeEffect, this.holistic);
+                                setHolisticOptions(
+                                    this.holisticOptions,
+                                    this.videoElement!,
+                                    this.holisticState.activeEffect,
+                                    this.holistic
+                                );
 
                                 this.holistic.onResults(mainOnResults);
                                 this.holisticState.ready = true;
@@ -228,30 +270,36 @@ export class V3DWeb {
         // Present a control panel through which the user can manipulate the solution
         // options.
         if (this.controlsElement) {
-            createControlPanel(this.holistic, this.videoElement, this.controlsElement,
-                this.holisticState.activeEffect, this.fpsControl);
+            createControlPanel(
+                this.holistic,
+                this.videoElement,
+                this.controlsElement,
+                this.holisticState.activeEffect,
+                this.fpsControl
+            );
         }
     }
 
     public async getVideoDevices() {
         // Ask permission
-        await navigator.mediaDevices.getUserMedia({video: true});
+        await navigator.mediaDevices.getUserMedia({ video: true });
 
         const devices = await navigator.mediaDevices.enumerateDevices();
-        return devices.filter(device => device.kind === 'videoinput');
+        return devices.filter((device) => device.kind === "videoinput");
     }
 
     public async getCamera(idx: number) {
-        await navigator.mediaDevices.getUserMedia({
-            video: {
-                width: 640,
-                height: 480,
-                deviceId: {
-                    exact: this.cameraList[idx].deviceId
-                }
-            }
-        })
-            .then(stream => {
+        await navigator.mediaDevices
+            .getUserMedia({
+                video: {
+                    width: 640,
+                    height: 480,
+                    deviceId: {
+                        exact: this.cameraList[idx].deviceId,
+                    },
+                },
+            })
+            .then((stream) => {
                 if (!this.videoElement) throw Error("Video Element not found!");
                 this.videoElement.srcObject = stream;
                 // let source = document.createElement('source');
@@ -262,7 +310,7 @@ export class V3DWeb {
                 // this.videoElement.appendChild(source);
                 this.videoElement.play();
             });
-            // .catch(e => console.error(e));
+        // .catch(e => console.error(e));
     }
 
     /**
@@ -303,29 +351,38 @@ export class V3DWeb {
         this.vrmManager?.dispose();
         this._vrmManager = null;
 
-        await this.v3DCore.AppendAsync('', this._vrmFile);
-        this._vrmManager = this.v3DCore.getVRMManagerByURI((this._vrmFile as File).name ?
-            (this._vrmFile as File).name : (this._vrmFile as string));
+        await this.v3DCore.AppendAsync("", this._vrmFile);
+        this._vrmManager = this.v3DCore.getVRMManagerByURI(
+            (this._vrmFile as File).name
+                ? (this._vrmFile as File).name
+                : (this._vrmFile as string)
+        );
 
         if (!this._vrmManager) throw Error("VRM model loading failed!");
 
         // Reset camera
-        const mainCamera = (this.v3DCore.mainCamera as ArcRotateCamera);
+        const mainCamera = this.v3DCore.mainCamera as ArcRotateCamera;
         mainCamera.setPosition(new Vector3(0, 1.05, 4.5));
         mainCamera.setTarget(
-            this._vrmManager.rootMesh.getWorldMatrix().getTranslation().subtractFromFloats(0, -1.25, 0));
-        await this.workerPose.setBonesHierarchyTree(this._vrmManager.transformNodeTree, true);
-        this.workerPose.resetBoneRotations();
-        this.v3DCore.updateAfterRenderFunction(
-            () => {
-                if (this.boneState.bonesNeedUpdate) {
-                    updatePose(this._vrmManager!, this.boneState, this.boneOptions);
-                    updateSpringBones(this._vrmManager!);
-                    this.boneState.bonesNeedUpdate = false;
-                }
-            }
+            this._vrmManager.rootMesh
+                .getWorldMatrix()
+                .getTranslation()
+                .subtractFromFloats(0, -1.25, 0)
         );
-        this._vrmManager.rootMesh.rotationQuaternion = Quaternion.RotationYawPitchRoll(0, 0, 0);
+        await this.workerPose.setBonesHierarchyTree(
+            this._vrmManager.transformNodeTree,
+            true
+        );
+        this.workerPose.resetBoneRotations();
+        this.v3DCore.updateAfterRenderFunction(() => {
+            if (this.boneState.bonesNeedUpdate) {
+                updatePose(this._vrmManager!, this.boneState, this.boneOptions);
+                updateSpringBones(this._vrmManager!);
+                this.boneState.bonesNeedUpdate = false;
+            }
+        });
+        this._vrmManager.rootMesh.rotationQuaternion =
+            Quaternion.RotationYawPitchRoll(0, 0, 0);
     }
 }
 
