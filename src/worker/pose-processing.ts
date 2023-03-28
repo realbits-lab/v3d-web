@@ -43,7 +43,7 @@ import {
     remapRangeNoCap,
     remapRangeWithCap,
 } from "../helper/utils";
-import { TransformNodeTreeNode } from "v3d-core/dist/src/importer/babylon-vrm-loader/src";
+import { TransformNodeTreeNode } from "v3d-core-realbits/dist/src/importer/babylon-vrm-loader/src";
 import {
     CloneableResults,
     depthFirstSearch,
@@ -80,7 +80,7 @@ import {
 } from "../helper/basis";
 import { VISIBILITY_THRESHOLD } from "../helper/filter";
 import { BoneOptions } from "../v3d-web";
-import { HumanoidBone } from "v3d-core/dist/src/importer/babylon-vrm-loader/src/humanoid-bone";
+import { HumanoidBone } from "v3d-core-realbits/dist/src/importer/babylon-vrm-loader/src/humanoid-bone";
 
 export class PoseKeyPoints {
     public top_face_oval = new FilteredLandmarkVector();
@@ -1384,7 +1384,10 @@ export class Poses {
         // Create pose landmark list
         // @ts-ignore
         const inputWorldPoseLandmarks: NormalizedLandmarkList | undefined =
-            this.cloneableInputResults?.ea; // Seems to be the new pose_world_landmark
+            //* TODO: Patched.
+            //* https://stackoverflow.com/questions/18083389/ignore-typescript-errors-property-does-not-exist-on-value-of-type
+            // this.cloneableInputResults?.ea; // Seems to be the new pose_world_landmark
+            (this.cloneableInputResults as any)?.ea; // Seems to be the new pose_world_landmark
         const inputPoseLandmarks: NormalizedLandmarkList | undefined =
             this.cloneableInputResults?.poseLandmarks; // Seems to be the new pose_world_landmark
         if (inputWorldPoseLandmarks && inputPoseLandmarks) {
