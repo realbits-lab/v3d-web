@@ -29,7 +29,7 @@
     "author": "Phantom Development",
     "scripts": {
         "build": "webpack --config webpack.config.js --watch --progress",
-        "build:test": "webpack --config webpack.config.js --watch --progress",
+        "build:test": "webpack --config webpack.test.config.js --watch --progress",
         "debug": "webpack-dev-server --config webpack.test.config.js",
         "start": "npm run build && npm run dev",
         "test": "echo \"Error: no test specified\" && exit 1"

@@ -6,7 +6,7 @@ const test_folder = 'test'
 const config = {
     mode: 'development',
     devtool: 'inline-source-map',
-    entry: path.resolve(__dirname, 'src', 'index-test'),
+    entry: path.resolve(__dirname, 'src', 'index'),
     output: {
         library: {
             name: 'v3d-web',
