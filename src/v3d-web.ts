@@ -48,8 +48,8 @@ import {
     onResults,
     setHolisticOptions,
 } from "./mediapipe";
-import { VRMManager } from "v3d-core/dist/src/importer/babylon-vrm-loader/src";
-import { V3DCore } from "v3d-core/dist/src";
+import { VRMManager } from "v3d-core-realbits/dist/src/importer/babylon-vrm-loader/src";
+import { V3DCore } from "v3d-core-realbits/dist/src";
 import { CloneableQuaternionMap } from "./helper/quaternion";
 import { CustomLoadingScreen } from "./helper/utils";
 
@@ -82,11 +82,11 @@ export class V3DWeb {
     private _boneOptions: BoneOptions = {
         blinkLinkLR: true,
         expression: "Neutral",
-        irisLockX: true,
+        irisLockX: false,
         lockFinger: false,
         lockArm: false,
         lockLeg: false,
-        resetInvisible: false,
+        resetInvisible: true,
     };
     get boneOptions(): BoneOptions {
         return this._boneOptions;
