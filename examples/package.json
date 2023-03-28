@@ -27,8 +27,8 @@
     "react-dom": "^18.2.0",
     "react-scripts": "5.0.1",
     "typescript": "^4.9.5",
-    "v3d-web-realbits": "^0.0.7",
-    "v3d-core-realbits": "^0.0.3",
+    "v3d-web-realbits": "^0.0.8",
+    "v3d-core-realbits": "^0.0.4",
     "web-vitals": "^2.1.4"
   },
   "scripts": {

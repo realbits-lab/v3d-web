@@ -14,7 +14,7 @@ Copyright (C) 2021  The v3d Authors.
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {V3DCore} from "v3d-core/dist/src";
+import {V3DCore} from "v3d-core-realbits/dist/src";
 import {ArcRotateCamera, Nullable, Quaternion, Scene} from "@babylonjs/core";
 import {Color3, Vector3} from "@babylonjs/core/Maths";
 import {Engine} from "@babylonjs/core/Engines";
@@ -29,9 +29,9 @@ import "@babylonjs/inspector";
 import * as Comlink from "comlink";
 import {Poses} from "./worker/pose-processing";
 import {Clock} from "./helper/clock";
-import {VRMManager} from "v3d-core/dist/src/importer/babylon-vrm-loader/src";
+import {VRMManager} from "v3d-core-realbits/dist/src/importer/babylon-vrm-loader/src";
 import {HAND_LANDMARKS_BONE_MAPPING} from "./helper/landmark";
-import {HumanoidBone} from "v3d-core/dist/src/importer/babylon-vrm-loader/src/humanoid-bone";
+import {HumanoidBone} from "v3d-core-realbits/dist/src/importer/babylon-vrm-loader/src/humanoid-bone";
 import {KeysMatching, LR} from "./helper/utils";
 import {
     CloneableQuaternionMap,
