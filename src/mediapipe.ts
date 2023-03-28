@@ -41,7 +41,7 @@ import {Data, drawConnectors, drawLandmarks, lerp} from "@mediapipe/drawing_util
 import {Poses} from "./worker/pose-processing";
 import {debugInfo, updateBuffer} from "./core";
 import {Vector3, Nullable} from "@babylonjs/core";
-import {VRMManager} from "v3d-core/dist/src/importer/babylon-vrm-loader/src";
+import {VRMManager} from "v3d-core-realbits/dist/src/importer/babylon-vrm-loader/src";
 
 function removeElements(
     landmarks: NormalizedLandmarkList, elements: number[]) {
