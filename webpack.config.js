@@ -66,7 +66,6 @@ const config = [
         experiments: {
             outputModule: true,
         },
-        externals: [/^v3d-core-realbits.*$/, /^@mediapipe.*$/],
         externalsType: "module",
     }),
     // browser global

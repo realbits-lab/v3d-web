@@ -1,6 +1,6 @@
 {
     "name": "v3d-web-realbits",
-    "version": "0.0.9",
+    "version": "0.0.10",
     "description": "Single camera motion-tracking in browser",
     "keywords": [
         "babylon.js",
@@ -62,6 +62,6 @@
         "babylonjs-gltf2interface": "5.0.0",
         "comlink": "^4.3.1",
         "tslib": "^2.5.0",
-        "v3d-core-realbits": "^0.0.5"
+        "v3d-core-realbits": "^0.0.7"
     }
 }
