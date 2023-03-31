@@ -235,16 +235,25 @@ export class V3DWeb {
                             /**
                              * MediaPipe
                              */
-                            const mainOnResults = (results: Results) =>
-                                onResults(
-                                    results,
-                                    vrmManager,
-                                    this.videoCanvasElement,
-                                    this.workerPose!,
-                                    this.holisticState.activeEffect,
-                                    this._updateBufferCallback,
-                                    this.fpsControl
-                                );
+                            const mainOnResults = (results: Results) => {
+                                // console.log("call mainOnResults()");
+
+                                if (
+                                    (results as any)?.ea &&
+                                    results.poseLandmarks
+                                ) {
+                                    onResults(
+                                        results,
+                                        vrmManager,
+                                        this.videoCanvasElement,
+                                        this.workerPose!,
+                                        this.holisticState.activeEffect,
+                                        this._updateBufferCallback,
+                                        this.fpsControl
+                                    );
+                                }
+                            };
+
                             this.holistic.initialize().then(() => {
                                 // Set initial options
                                 setHolisticOptions(

@@ -394,6 +394,9 @@ export class Poses {
      * @param results Result object from MediaPipe Holistic
      */
     public process(results: CloneableResults) {
+        // console.log("call process()");
+        // console.log("results: ", results);
+
         this.cloneableInputResults = results;
         if (!this.cloneableInputResults) return;
 
