@@ -46,11 +46,11 @@ const config = [
     // Merge.merge(baseConfig, {
     //     output: {
     //         library: {
-    //             name: 'v3d-web',
-    //             type: 'umd',
+    //             name: "v3d-web",
+    //             type: "umd",
     //         },
-    //         filename: '[name].module.js',
-    //         path: path.resolve(__dirname, 'dist'),
+    //         filename: "[name].module.js",
+    //         path: path.resolve(__dirname, "dist"),
     //     },
     // }),
     // ES6
@@ -72,11 +72,11 @@ const config = [
     // Merge.merge(baseConfig, {
     //     output: {
     //         library: {
-    //             name: 'v3d-web',
-    //             type: 'window',
+    //             name: "v3d-web",
+    //             type: "window",
     //         },
-    //         filename: '[name].js',
-    //         path: path.resolve(__dirname, 'dist'),
+    //         filename: "[name].js",
+    //         path: path.resolve(__dirname, "dist"),
     //     },
     // }),
 ];

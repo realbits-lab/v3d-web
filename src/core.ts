@@ -22,9 +22,9 @@ import {Camera} from "@babylonjs/core";
 import {DebugInfo} from "./helper/debug";
 
 // Debug
-import "@babylonjs/core/Debug";
-import "@babylonjs/gui";
-import "@babylonjs/inspector";
+// import "@babylonjs/core/Debug";
+// import "@babylonjs/gui";
+// import "@babylonjs/inspector";
 
 import * as Comlink from "comlink";
 import {Poses} from "./worker/pose-processing";

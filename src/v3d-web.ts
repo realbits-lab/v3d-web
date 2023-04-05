@@ -16,12 +16,12 @@ Copyright (C) 2021  The v3d Authors.
 
 import * as Comlink from "comlink";
 
-import "@babylonjs/core/Loading/loadingScreen";
+// import "@babylonjs/core/Loading/loadingScreen";
 
 // Register plugins (side effect)
-import "@babylonjs/core/Loading/Plugins/babylonFileLoader";
-import "@babylonjs/core/Materials";
-import "@babylonjs/loaders/glTF/glTFFileLoader";
+// import "@babylonjs/core/Loading/Plugins/babylonFileLoader";
+// import "@babylonjs/core/Materials";
+// import "@babylonjs/loaders/glTF/glTFFileLoader";
 
 import {
     Engine,
@@ -152,8 +152,11 @@ export class V3DWeb {
         public readonly controlsElement?: Nullable<HTMLDivElement>,
         private readonly holisticConfig?: HolisticConfig,
         private readonly loadingDiv?: Nullable<HTMLDivElement>,
+        private readonly useMotionCapture?: Nullable<boolean>,
         afterInitCallback?: (...args: any[]) => any
     ) {
+        console.log("call constructor()");
+
         let globalInit = false;
         if (!this.videoElement || !this.webglCanvasElement) {
             globalInit = true;
@@ -226,53 +229,55 @@ export class V3DWeb {
                 this._vrmManager = vrmManager;
 
                 // Camera
-                this.getVideoDevices().then((devices) => {
-                    if (devices.length < 1) {
-                        throw Error("No camera found!");
-                    } else {
-                        this._cameraList = devices;
-                        this.getCamera(0).then(() => {
-                            /**
-                             * MediaPipe
-                             */
-                            const mainOnResults = (results: Results) => {
-                                // console.log("call mainOnResults()");
+                if (useMotionCapture && useMotionCapture === true) {
+                    this.getVideoDevices().then((devices) => {
+                        if (devices.length < 1) {
+                            throw Error("No camera found!");
+                        } else {
+                            this._cameraList = devices;
+                            this.getCamera(0).then(() => {
+                                /**
+                                 * MediaPipe
+                                 */
+                                const mainOnResults = (results: Results) => {
+                                    // console.log("call mainOnResults()");
 
-                                if (
-                                    (results as any)?.ea &&
-                                    results.poseLandmarks
-                                ) {
-                                    onResults(
-                                        results,
-                                        vrmManager,
-                                        this.videoCanvasElement,
-                                        this.workerPose!,
+                                    if (
+                                        (results as any)?.ea &&
+                                        results.poseLandmarks
+                                    ) {
+                                        onResults(
+                                            results,
+                                            vrmManager,
+                                            this.videoCanvasElement,
+                                            this.workerPose!,
+                                            this.holisticState.activeEffect,
+                                            this._updateBufferCallback,
+                                            this.fpsControl
+                                        );
+                                    }
+                                };
+
+                                this.holistic.initialize().then(() => {
+                                    // Set initial options
+                                    setHolisticOptions(
+                                        this.holisticOptions,
+                                        this.videoElement!,
                                         this.holisticState.activeEffect,
-                                        this._updateBufferCallback,
-                                        this.fpsControl
+                                        this.holistic
                                     );
-                                }
-                            };
 
-                            this.holistic.initialize().then(() => {
-                                // Set initial options
-                                setHolisticOptions(
-                                    this.holisticOptions,
-                                    this.videoElement!,
-                                    this.holisticState.activeEffect,
-                                    this.holistic
-                                );
+                                    this.holistic.onResults(mainOnResults);
+                                    this.holisticState.ready = true;
 
-                                this.holistic.onResults(mainOnResults);
-                                this.holisticState.ready = true;
+                                    this.customLoadingScreen?.hideLoadingUI();
 
-                                this.customLoadingScreen?.hideLoadingUI();
-
-                                if (afterInitCallback) afterInitCallback();
+                                    if (afterInitCallback) afterInitCallback();
+                                });
                             });
-                        });
-                    }
-                });
+                        }
+                    });
+                }
             });
         });
 

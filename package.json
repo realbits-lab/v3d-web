@@ -1,7 +1,9 @@
 {
     "name": "v3d-web-realbits",
-    "version": "0.0.11",
+    "version": "0.0.15",
     "description": "Single camera motion-tracking in browser",
+    "tempMain": "dist/v3dweb.es6.js",
+    "main": "dist/v3dweb.module.js",
     "keywords": [
         "babylon.js",
         "VRM",
@@ -28,8 +30,8 @@
     "license": "AGPL-3.0-only",
     "author": "Phantom Development",
     "scripts": {
-        "build": "webpack --config webpack.config.js --watch --progress",
-        "build:test": "webpack --config webpack.test.config.js --watch --progress",
+        "build:production": "webpack --config webpack.config.js --watch --progress",
+        "build:development": "webpack --config webpack.test.config.js --watch --progress",
         "debug": "webpack-dev-server --config webpack.test.config.js",
         "start": "npm run build && npm run dev",
         "test": "echo \"Error: no test specified\" && exit 1"
@@ -39,8 +41,10 @@
         "@types/node": "^16.11.9",
         "@types/webpack": "^5.28.0",
         "chroma-js": "^2.1.2",
+        "comlink": "^4.3.1",
         "copy-webpack-plugin": "^10.0.0",
         "kalmanjs": "^1.1.0",
+        "tslib": "^2.5.0",
         "ts-loader": "^9.2.6",
         "typescript": "^4.5.2",
         "webpack": "^5.64.2",
@@ -61,8 +65,7 @@
         "@mediapipe/face_mesh": "^0.4.1633559619",
         "@mediapipe/holistic": "0.5.1635989137",
         "babylonjs-gltf2interface": "5.0.0",
-        "comlink": "^4.3.1",
-        "tslib": "^2.5.0",
+        "babylon-mtoon-material": "5.0.0",
         "v3d-core-realbits": "^0.0.7"
     }
 }
