@@ -1,6 +1,6 @@
 {
     "name": "v3d-web-realbits",
-    "version": "0.0.15",
+    "version": "0.0.19",
     "description": "Single camera motion-tracking in browser",
     "tempMain": "dist/v3dweb.es6.js",
     "main": "dist/v3dweb.module.js",

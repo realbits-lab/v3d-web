@@ -229,55 +229,54 @@ export class V3DWeb {
                 this._vrmManager = vrmManager;
 
                 // Camera
-                if (useMotionCapture && useMotionCapture === true) {
-                    this.getVideoDevices().then((devices) => {
-                        if (devices.length < 1) {
-                            throw Error("No camera found!");
-                        } else {
-                            this._cameraList = devices;
-                            this.getCamera(0).then(() => {
-                                /**
-                                 * MediaPipe
-                                 */
-                                const mainOnResults = (results: Results) => {
-                                    // console.log("call mainOnResults()");
+                this.getVideoDevices().then((devices) => {
+                    if (devices.length < 1) {
+                        throw Error("No camera found!");
+                    } else {
+                        this._cameraList = devices;
+                        this.getCamera(0).then(() => {
+                            /**
+                             * MediaPipe
+                             */
+                            const mainOnResults = (results: Results) => {
+                                // console.log("call mainOnResults()");
 
-                                    if (
-                                        (results as any)?.ea &&
-                                        results.poseLandmarks
-                                    ) {
-                                        onResults(
-                                            results,
-                                            vrmManager,
-                                            this.videoCanvasElement,
-                                            this.workerPose!,
-                                            this.holisticState.activeEffect,
-                                            this._updateBufferCallback,
-                                            this.fpsControl
-                                        );
-                                    }
-                                };
-
-                                this.holistic.initialize().then(() => {
-                                    // Set initial options
-                                    setHolisticOptions(
-                                        this.holisticOptions,
-                                        this.videoElement!,
+                                if (
+                                    (results as any)?.ea &&
+                                    results.poseLandmarks &&
+                                    useMotionCapture === true
+                                ) {
+                                    onResults(
+                                        results,
+                                        vrmManager,
+                                        this.videoCanvasElement,
+                                        this.workerPose!,
                                         this.holisticState.activeEffect,
-                                        this.holistic
+                                        this._updateBufferCallback,
+                                        this.fpsControl
                                     );
+                                }
+                            };
 
-                                    this.holistic.onResults(mainOnResults);
-                                    this.holisticState.ready = true;
+                            this.holistic.initialize().then(() => {
+                                // Set initial options
+                                setHolisticOptions(
+                                    this.holisticOptions,
+                                    this.videoElement!,
+                                    this.holisticState.activeEffect,
+                                    this.holistic
+                                );
 
-                                    this.customLoadingScreen?.hideLoadingUI();
+                                this.holistic.onResults(mainOnResults);
+                                this.holisticState.ready = true;
 
-                                    if (afterInitCallback) afterInitCallback();
-                                });
+                                this.customLoadingScreen?.hideLoadingUI();
+
+                                if (afterInitCallback) afterInitCallback();
                             });
-                        }
-                    });
-                }
+                        });
+                    }
+                });
             });
         });
 
