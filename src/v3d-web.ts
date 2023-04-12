@@ -374,14 +374,14 @@ export class V3DWeb {
         if (!this._vrmManager) throw Error("VRM model loading failed!");
 
         // Reset camera
-        const mainCamera = this.v3DCore.mainCamera as ArcRotateCamera;
-        mainCamera.setPosition(new Vector3(0, 1.05, 4.5));
-        mainCamera.setTarget(
-            this._vrmManager.rootMesh
-                .getWorldMatrix()
-                .getTranslation()
-                .subtractFromFloats(0, -1.25, 0)
-        );
+        // const mainCamera = this.v3DCore.mainCamera as ArcRotateCamera;
+        // mainCamera.setPosition(new Vector3(0, 1.05, 4.5));
+        // mainCamera.setTarget(
+        //     this._vrmManager.rootMesh
+        //         .getWorldMatrix()
+        //         .getTranslation()
+        //         .subtractFromFloats(0, -1.25, 0)
+        // );
         await this.workerPose.setBonesHierarchyTree(
             this._vrmManager.transformNodeTree,
             true
@@ -394,8 +394,8 @@ export class V3DWeb {
                 this.boneState.bonesNeedUpdate = false;
             }
         });
-        this._vrmManager.rootMesh.rotationQuaternion =
-            Quaternion.RotationYawPitchRoll(0, 0, 0);
+        // this._vrmManager.rootMesh.rotationQuaternion =
+        //     Quaternion.RotationYawPitchRoll(0, 0, 0);
     }
 }
 
