@@ -58,7 +58,6 @@
         "@mediapipe/face_mesh": "^0.4.1633559619",
         "@mediapipe/holistic": "0.5.1635989137",
         "babylonjs-gltf2interface": "5.0.0",
-        "babylon-mtoon-material": "5.0.0",
         "v3d-core-realbits": "^0.0.9"
     },
     "devDependencies": {
@@ -69,8 +68,8 @@
         "comlink": "^4.3.1",
         "copy-webpack-plugin": "^10.0.0",
         "kalmanjs": "^1.1.0",
-        "tslib": "^2.5.0",
         "ts-loader": "^9.2.6",
+        "tslib": "^2.5.0",
         "typescript": "^4.5.2",
         "webpack": "^5.64.2",
         "webpack-cli": "^4.9.1",

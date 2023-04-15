@@ -56,7 +56,7 @@ export async function createScene(
     vrmFile: File | string,
     videoElement: HTMLVideoElement
 ): Promise<Nullable<[V3DCore, VRMManager]>> {
-    console.log("call createScene()");
+    // console.log("call createScene()");
 
     if (!workerPose) return null;
 
@@ -71,21 +71,18 @@ export async function createScene(
     );
 
     // Camera
-    //* TODO: Test.
-    // v3DCore.attachCameraTo(vrmManager);
-    // const mainCamera = v3DCore.mainCamera as ArcRotateCamera;
-    // mainCamera.setPosition(new Vector3(0, 1.05, 4.5));
-    // mainCamera.setTarget(
-    //     vrmManager.rootMesh
-    //         .getWorldMatrix()
-    //         .getTranslation()
-    //         .subtractFromFloats(0, -1.25, 0)
-    // );
-    // mainCamera.fovMode = Camera.FOVMODE_HORIZONTAL_FIXED;
+    v3DCore.attachCameraTo(vrmManager);
+    const mainCamera = v3DCore.mainCamera as ArcRotateCamera;
+    let firstPersonCameraPosition =
+        vrmManager.getFirstPersonCameraPosition() || new Vector3(0, 0, 0);
+    firstPersonCameraPosition.z += 0.5;
+    mainCamera.setPosition(firstPersonCameraPosition);
+    mainCamera.setTarget(firstPersonCameraPosition);
+    mainCamera.fovMode = Camera.FOVMODE_HORIZONTAL_FIXED;
 
     // Lights and Skybox
-    // v3DCore.addAmbientLight(new Color3(1, 1, 1));
-    // v3DCore.setBackgroundColor(Color3.White());
+    v3DCore.addAmbientLight(new Color3(1, 1, 1));
+    v3DCore.setBackgroundColor(Color3.White());
 
     v3DCore.renderingPipeline.depthOfFieldEnabled = false;
 

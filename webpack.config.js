@@ -13,6 +13,10 @@ const baseConfig = {
     module: {
         rules: [
             {
+                test: /\.(vert|frag)$/,
+                type: "asset/source",
+            },
+            {
                 test: /\.ts$/,
                 use: "ts-loader",
             },
