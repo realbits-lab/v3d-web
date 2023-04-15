@@ -1,14 +1,14 @@
 {
     "name": "v3d-web-realbits",
-    "version": "0.0.20",
+    "version": "0.0.21",
     "description": "Single camera motion-tracking in browser",
-    "tempMain": "dist/v3dweb.es6.js",
-    "main": "dist/v3dweb.module.js",
+    "main": "dist/v3dweb.es6.js",
     "keywords": [
         "babylon.js",
         "VRM",
         "MediaPipe",
-        "WebGL"
+        "WebGL",
+        "Realbits"
     ],
     "files": [
         "dist",
@@ -28,28 +28,21 @@
         "dist/src/worker"
     ],
     "license": "AGPL-3.0-only",
-    "author": "Phantom Development",
+    "author": {
+        "name": "Phantom Development and Realbits dev team",
+        "email": "dev.realbits@gmail.com",
+        "url": "https://realbits-lab.github.io"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/realbits-lab/v3d-web"
+    },
     "scripts": {
         "build:production": "webpack --config webpack.config.js --watch --progress",
         "build:development": "webpack --config webpack.test.config.js --watch --progress",
         "debug": "webpack-dev-server --config webpack.test.config.js",
         "start": "npm run build && npm run dev",
         "test": "echo \"Error: no test specified\" && exit 1"
-    },
-    "devDependencies": {
-        "@types/chroma-js": "^2.1.3",
-        "@types/node": "^16.11.9",
-        "@types/webpack": "^5.28.0",
-        "chroma-js": "^2.1.2",
-        "comlink": "^4.3.1",
-        "copy-webpack-plugin": "^10.0.0",
-        "kalmanjs": "^1.1.0",
-        "tslib": "^2.5.0",
-        "ts-loader": "^9.2.6",
-        "typescript": "^4.5.2",
-        "webpack": "^5.64.2",
-        "webpack-cli": "^4.9.1",
-        "webpack-dev-server": "^4.5.0"
     },
     "dependencies": {
         "@babylonjs/core": "5.19.0",
@@ -67,5 +60,20 @@
         "babylonjs-gltf2interface": "5.0.0",
         "babylon-mtoon-material": "5.0.0",
         "v3d-core-realbits": "^0.0.7"
+    },
+    "devDependencies": {
+        "@types/chroma-js": "^2.1.3",
+        "@types/node": "^16.11.9",
+        "@types/webpack": "^5.28.0",
+        "chroma-js": "^2.1.2",
+        "comlink": "^4.3.1",
+        "copy-webpack-plugin": "^10.0.0",
+        "kalmanjs": "^1.1.0",
+        "tslib": "^2.5.0",
+        "ts-loader": "^9.2.6",
+        "typescript": "^4.5.2",
+        "webpack": "^5.64.2",
+        "webpack-cli": "^4.9.1",
+        "webpack-dev-server": "^4.5.0"
     }
 }

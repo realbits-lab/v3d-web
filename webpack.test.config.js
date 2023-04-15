@@ -1,25 +1,17 @@
-const path = require( 'path' );
-const CopyPlugin = require( 'copy-webpack-plugin' );
+const path = require("path");
+const CopyPlugin = require("copy-webpack-plugin");
 
-const test_folder = 'test'
+const test_folder = "test";
 
 const config = {
-    mode: 'development',
-    devtool: 'inline-source-map',
-    entry: path.resolve(__dirname, 'src', 'index'),
-    output: {
-        library: {
-            name: 'v3d-web',
-            type: 'umd',
-        },
-        filename: '[name].test.js',
-        path: path.resolve(__dirname, test_folder),
-    },
+    mode: "development",
+    devtool: "inline-source-map",
+    entry: path.resolve(__dirname, "src", "index"),
     module: {
         rules: [
             {
                 test: /\.ts$/,
-                use: 'ts-loader',
+                use: "ts-loader",
             },
             {
                 test: /\.m?js$/,
@@ -30,16 +22,17 @@ const config = {
         ],
     },
     resolve: {
-        modules: [path.resolve(__dirname, 'node_modules')],
-        extensions: ['.js', '.ts'],
+        modules: [path.resolve(__dirname, "node_modules")],
+        extensions: [".js", ".ts"],
         symlinks: false,
     },
     experiments: {
+        futureDefaults: true,
         topLevelAwait: true,
     },
-    target: ['web'],
+    target: ["web"],
     devServer: {
-        allowedHosts: 'localhost',
+        allowedHosts: "localhost",
         static: {
             directory: path.resolve(__dirname, test_folder),
         },
@@ -48,11 +41,17 @@ const config = {
     },
     plugins: [
         new CopyPlugin({
-            patterns: [
-                {from: "node_modules/@mediapipe/holistic", to: "."},
-            ],
+            patterns: [{ from: "node_modules/@mediapipe/holistic", to: "." }],
         }),
     ],
+    output: {
+        library: {
+            name: "v3d-web",
+            type: "umd",
+        },
+        filename: "[name].test.js",
+        path: path.resolve(__dirname, test_folder),
+    },
 };
 
 module.exports = config;

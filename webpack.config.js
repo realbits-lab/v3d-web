@@ -4,6 +4,7 @@ const terser = require("terser-webpack-plugin");
 
 const baseConfig = {
     mode: "production",
+    devtool: "source-map",
     entry: {
         v3dweb: path.resolve(__dirname, "src", "index"),
     },
@@ -27,8 +28,11 @@ const baseConfig = {
         symlinks: false,
     },
     experiments: {
+        futureDefaults: true,
         topLevelAwait: true,
     },
+    // target: ["web"],
+    target: ["es2021"],
     optimization: {
         minimize: true,
         minimizer: [
@@ -38,7 +42,6 @@ const baseConfig = {
         ],
         concatenateModules: true,
     },
-    target: ["web"],
 };
 
 const config = [
@@ -63,10 +66,10 @@ const config = [
             path: path.resolve(__dirname, "dist"),
             environment: { module: true },
         },
+        externalsType: "module",
         experiments: {
             outputModule: true,
         },
-        externalsType: "module",
     }),
     // browser global
     // Merge.merge(baseConfig, {
