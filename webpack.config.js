@@ -3,7 +3,9 @@ const Merge = require("webpack-merge");
 const terser = require("terser-webpack-plugin");
 
 const baseConfig = {
-    mode: "production",
+    //* TODO: Handle later.
+    // mode: "production",
+    mode: "development",
     devtool: "source-map",
     entry: {
         v3dweb: path.resolve(__dirname, "src", "index"),
@@ -31,17 +33,18 @@ const baseConfig = {
         futureDefaults: true,
         topLevelAwait: true,
     },
-    // target: ["web"],
     target: ["es2021"],
-    optimization: {
-        minimize: true,
-        minimizer: [
-            new terser({
-                extractComments: false,
-            }),
-        ],
-        concatenateModules: true,
-    },
+    //* TODO: Handle later.
+    // target: ["web"],
+    // optimization: {
+    //     minimize: true,
+    //     minimizer: [
+    //         new terser({
+    //             extractComments: false,
+    //         }),
+    //     ],
+    //     concatenateModules: true,
+    // },
 };
 
 const config = [

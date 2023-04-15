@@ -59,7 +59,7 @@
         "@mediapipe/holistic": "0.5.1635989137",
         "babylonjs-gltf2interface": "5.0.0",
         "babylon-mtoon-material": "5.0.0",
-        "v3d-core-realbits": "^0.0.7"
+        "v3d-core-realbits": "^0.0.9"
     },
     "devDependencies": {
         "@types/chroma-js": "^2.1.3",

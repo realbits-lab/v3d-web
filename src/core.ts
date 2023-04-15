@@ -56,6 +56,8 @@ export async function createScene(
     vrmFile: File | string,
     videoElement: HTMLVideoElement
 ): Promise<Nullable<[V3DCore, VRMManager]>> {
+    console.log("call createScene()");
+
     if (!workerPose) return null;
 
     // Create v3d core
@@ -63,7 +65,7 @@ export async function createScene(
     await v3DCore.AppendAsync("", vrmFile);
 
     // Get managers
-    console.log("vrmFile: ", vrmFile);
+    // console.log("vrmFile: ", vrmFile);
     const vrmManager = v3DCore.getVRMManagerByURI(
         (vrmFile as File).name ? (vrmFile as File).name : (vrmFile as string)
     );

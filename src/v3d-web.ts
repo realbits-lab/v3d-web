@@ -155,7 +155,7 @@ export class V3DWeb {
         private readonly useMotionCapture?: Nullable<boolean>,
         afterInitCallback?: (...args: any[]) => any
     ) {
-        console.log("call constructor()");
+        // console.log("call constructor()");
 
         let globalInit = false;
         if (!this.videoElement || !this.webglCanvasElement) {
