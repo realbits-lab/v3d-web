@@ -1,6 +1,6 @@
 {
     "name": "v3d-web-realbits",
-    "version": "0.0.21",
+    "version": "0.0.22",
     "description": "Single camera motion-tracking in browser",
     "main": "dist/v3dweb.es6.js",
     "keywords": [
@@ -58,7 +58,7 @@
         "@mediapipe/face_mesh": "^0.4.1633559619",
         "@mediapipe/holistic": "0.5.1635989137",
         "babylonjs-gltf2interface": "5.0.0",
-        "v3d-core-realbits": "^0.0.9"
+        "v3d-core-realbits": "^0.0.11"
     },
     "devDependencies": {
         "@types/chroma-js": "^2.1.3",
