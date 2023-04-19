@@ -58,6 +58,8 @@ import {
     normalizedLandmarkToVector,
     POSE_LANDMARK_LENGTH,
     vectorToNormalizedLandmark,
+    //* TODO: Mobile patch
+    CloneableFMResults,
 } from "../helper/landmark";
 import {
     AXIS,
@@ -170,6 +172,8 @@ export class Poses {
 
     // Results
     public cloneableInputResults: Nullable<CloneableResults> = null;
+    //* TODO: Mobile patch.
+    public cloneableFMInputResults: Nullable<CloneableFMResults> = null;
 
     // Pose Landmarks
     public inputPoseLandmarks: NormalizedLandmarkList =
@@ -522,6 +526,68 @@ export class Poses {
         this.pushBoneRotationBuffer();
     }
 
+    //* TODO: Mobile patch.
+    public processFaceMesh(results: CloneableFMResults) {
+        // console.log("call process()");
+        // console.log("results: ", results);
+
+        this.cloneableFMInputResults = results;
+        if (!this.cloneableFMInputResults) return;
+
+        if (this._boneOptions.resetInvisible) {
+            this.resetBoneRotations();
+        }
+
+        this.preProcessFMResults();
+        this.filterFaceLandmarks();
+
+        // Gather key points
+        this.getKeyPoints();
+
+        // Bone Orientations Independent
+        // Calculate iris orientations
+        this.calcFMIrisNormal();
+
+        // Bone Orientations Dependent
+        // Calculate face orientation
+        this.calcFaceBones();
+
+        // Calculate expressions
+        this.calcExpressions();
+
+        // Post processing
+        if (this._boneOptions.irisLockX) {
+            console.log("lock iris");
+            this._boneRotations["iris"].set(
+                removeRotationAxisWithCap(
+                    cloneableQuaternionToQuaternion(
+                        this._boneRotations["iris"]
+                    ),
+                    AXIS.x
+                )
+            );
+            this._boneRotations["leftIris"].set(
+                removeRotationAxisWithCap(
+                    cloneableQuaternionToQuaternion(
+                        this._boneRotations["iris"]
+                    ),
+                    AXIS.x
+                )
+            );
+            this._boneRotations["rightIris"].set(
+                removeRotationAxisWithCap(
+                    cloneableQuaternionToQuaternion(
+                        this._boneRotations["iris"]
+                    ),
+                    AXIS.x
+                )
+            );
+        }
+
+        // Push to main
+        this.pushBoneRotationBuffer();
+    }
+
     public resetBoneRotations(sendResult = false) {
         for (const [k, v] of Object.entries(this._initBoneRotations)) {
             this._boneRotations[k].set(cloneableQuaternionToQuaternion(v));
@@ -649,6 +715,90 @@ export class Poses {
      */
     private calcIrisNormal() {
         if (!this.cloneableInputResults?.faceLandmarks) return;
+
+        const leftIrisCenter = this._keyPoints.left_iris_top.pos
+            .add(this._keyPoints.left_iris_bottom.pos)
+            .add(this._keyPoints.left_iris_left.pos)
+            .add(this._keyPoints.left_iris_right.pos)
+            .scale(0.5);
+        const rightIrisCenter = this._keyPoints.right_iris_top.pos
+            .add(this._keyPoints.right_iris_bottom.pos)
+            .add(this._keyPoints.right_iris_left.pos)
+            .add(this._keyPoints.right_iris_right.pos)
+            .scale(0.5);
+
+        // Calculate eye center
+        const leftEyeCenter = this._keyPoints.left_eye_top.pos
+            .add(this._keyPoints.left_eye_bottom.pos)
+            .add(this._keyPoints.left_eye_inner_secondary.pos)
+            .add(this._keyPoints.left_eye_outer_secondary.pos)
+            .scale(0.5);
+        const rightEyeCenter = this._keyPoints.right_eye_top.pos
+            .add(this._keyPoints.right_eye_bottom.pos)
+            .add(this._keyPoints.right_eye_outer_secondary.pos)
+            .add(this._keyPoints.right_eye_inner_secondary.pos)
+            .scale(0.5);
+
+        // Calculate offsets
+        const leftEyeWidth = this._keyPoints.left_eye_inner.pos
+            .subtract(this._keyPoints.left_eye_outer.pos)
+            .length();
+        const rightEyeWidth = this._keyPoints.right_eye_inner.pos
+            .subtract(this._keyPoints.right_eye_outer.pos)
+            .length();
+
+        const leftIrisOffset = leftIrisCenter
+            .subtract(leftEyeCenter)
+            .scale(Poses.EYE_WIDTH_BASELINE / leftEyeWidth);
+        const rightIrisOffset = rightIrisCenter
+            .subtract(rightEyeCenter)
+            .scale(Poses.EYE_WIDTH_BASELINE / rightEyeWidth);
+
+        // Remap offsets to quaternions
+        const leftIrisRotationYPR = Quaternion.RotationYawPitchRoll(
+            remapRangeWithCap(
+                leftIrisOffset.x,
+                -Poses.IRIS_MP_X_RANGE,
+                Poses.IRIS_MP_X_RANGE,
+                -Poses.IRIS_BJS_X_RANGE,
+                Poses.IRIS_BJS_X_RANGE
+            ),
+            remapRangeWithCap(
+                leftIrisOffset.y,
+                -Poses.IRIS_MP_Y_RANGE,
+                Poses.IRIS_MP_Y_RANGE,
+                -Poses.IRIS_BJS_Y_RANGE,
+                Poses.IRIS_BJS_Y_RANGE
+            ),
+            0
+        );
+        const rightIrisRotationYPR = Quaternion.RotationYawPitchRoll(
+            remapRangeWithCap(
+                rightIrisOffset.x,
+                -Poses.IRIS_MP_X_RANGE,
+                Poses.IRIS_MP_X_RANGE,
+                -Poses.IRIS_BJS_X_RANGE,
+                Poses.IRIS_BJS_X_RANGE
+            ),
+            remapRangeWithCap(
+                rightIrisOffset.y,
+                -Poses.IRIS_MP_Y_RANGE,
+                Poses.IRIS_MP_Y_RANGE,
+                -Poses.IRIS_BJS_Y_RANGE,
+                Poses.IRIS_BJS_Y_RANGE
+            ),
+            0
+        );
+
+        this._boneRotations["leftIris"].set(leftIrisRotationYPR);
+        this._boneRotations["rightIris"].set(rightIrisRotationYPR);
+        this._boneRotations["iris"].set(
+            this.lRLinkQuaternion(leftIrisRotationYPR, rightIrisRotationYPR)
+        );
+    }
+
+    private calcFMIrisNormal() {
+        if (!this.cloneableFMInputResults?.multiFaceLandmarks[0]) return;
 
         const leftIrisCenter = this._keyPoints.left_iris_top.pos
             .add(this._keyPoints.left_iris_bottom.pos)
@@ -1483,6 +1633,21 @@ export class Poses {
                 this.rightHandLandmarks,
                 this.rightWristOffset.pos,
                 Poses.HAND_POSITION_SCALING
+            );
+        }
+    }
+
+    //* TODO: Mobile patch.
+    private preProcessFMResults() {
+        // Preprocessing results
+        // Create pose landmark list
+        // @ts-ignore
+        const inputFaceLandmarks =
+            this.cloneableFMInputResults?.multiFaceLandmarks[0]; // Seems to be the new pose_world_landmark
+        if (inputFaceLandmarks) {
+            this.inputFaceLandmarks = this.preProcessLandmarks(
+                inputFaceLandmarks,
+                this.faceLandmarks
             );
         }
     }

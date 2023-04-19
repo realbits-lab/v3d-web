@@ -37,8 +37,15 @@ import {
     CloneableQuaternionMap,
     cloneableQuaternionToQuaternion,
 } from "./helper/quaternion";
+//* TODO: Mobile patch.
 import { Holistic } from "@mediapipe/holistic";
-import { BoneOptions, BoneState, HolisticState } from "./v3d-web";
+import { FaceMesh } from "@mediapipe/face_mesh";
+import {
+    BoneOptions,
+    BoneState,
+    HolisticState,
+    FaceMeshState,
+} from "./v3d-web";
 
 const IS_DEBUG = false;
 const clock = new Clock(),
@@ -53,9 +60,14 @@ export async function createScene(
     boneOptions: BoneOptions,
     holistic: Holistic,
     holisticState: HolisticState,
+    //* TODO: Mobile patch.
+    faceMesh: FaceMesh,
+    faceMeshState: FaceMeshState,
     vrmFile: File | string,
     videoElement: HTMLVideoElement,
-    useMotionUpdate?: Nullable<boolean>
+    useMotionUpdate?: Nullable<boolean>,
+    //* TODO: Mobile patch.
+    useFaceMesh?: Nullable<boolean>
 ): Promise<Nullable<[V3DCore, VRMManager]>> {
     // console.log("call createScene()");
 
@@ -101,16 +113,30 @@ export async function createScene(
 
         // Half input fps. This version of Holistic is heavy on CPU time.
         // Wait until they fix web worker (https://github.com/google/mediapipe/issues/2506).
-        if (
-            holisticState.holisticUpdate &&
-            holisticState.ready &&
-            !videoElement.paused &&
-            videoElement.readyState > 2
-        ) {
-            // console.log("try to call holistic.send()");
-            holistic.send({ image: videoElement });
+        //* TODO: Mobile patch.
+        if (useFaceMesh) {
+            if (
+                faceMeshState.faceMeshUpdate &&
+                faceMeshState.ready &&
+                !videoElement.paused &&
+                videoElement.readyState > 2
+            ) {
+                // console.log("try to call holistic.send()");
+                faceMesh.send({ image: videoElement });
+            }
+            faceMeshState.faceMeshUpdate = !faceMeshState.faceMeshUpdate;
+        } else {
+            if (
+                holisticState.holisticUpdate &&
+                holisticState.ready &&
+                !videoElement.paused &&
+                videoElement.readyState > 2
+            ) {
+                // console.log("try to call holistic.send()");
+                holistic.send({ image: videoElement });
+            }
+            holisticState.holisticUpdate = !holisticState.holisticUpdate;
         }
-        holisticState.holisticUpdate = !holisticState.holisticUpdate;
     });
     v3DCore.updateAfterRenderFunction(() => {
         if (boneState.bonesNeedUpdate && useMotionUpdate) {

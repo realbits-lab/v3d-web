@@ -14,20 +14,22 @@ Copyright (C) 2022  The v3d Authors.
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {NormalizedLandmark, Results} from "@mediapipe/holistic";
-import {Nullable, Vector3} from "@babylonjs/core";
+import { NormalizedLandmark, Results } from "@mediapipe/holistic";
+import { Results as FMResults } from "@mediapipe/face_mesh";
+import { Nullable, Vector3 } from "@babylonjs/core";
 import {
     FilterParams,
     GaussianVectorFilter,
     KalmanVectorFilter,
     OneEuroVectorFilter,
-    VISIBILITY_THRESHOLD
+    VISIBILITY_THRESHOLD,
 } from "./filter";
-import {objectFlip} from "./utils";
+import { objectFlip } from "./utils";
 
 export class FilteredLandmarkVector {
     private mainFilter: OneEuroVectorFilter | KalmanVectorFilter;
-    private readonly gaussianVectorFilter: Nullable<GaussianVectorFilter> = null;
+    private readonly gaussianVectorFilter: Nullable<GaussianVectorFilter> =
+        null;
 
     private _t = 0;
     get t(): number {
@@ -49,7 +51,7 @@ export class FilteredLandmarkVector {
         params: FilterParams = {
             oneEuroCutoff: 0.01,
             oneEuroBeta: 0,
-            type: 'OneEuro'
+            type: "OneEuro",
         }
     ) {
         if (params.type === "Kalman")
@@ -60,11 +62,14 @@ export class FilteredLandmarkVector {
                 this.pos,
                 Vector3.Zero(),
                 params.oneEuroCutoff,
-                params.oneEuroBeta);
-        else
-            throw Error("Wrong filter type!");
+                params.oneEuroBeta
+            );
+        else throw Error("Wrong filter type!");
         if (params.gaussianSigma)
-            this.gaussianVectorFilter = new GaussianVectorFilter(5, params.gaussianSigma);
+            this.gaussianVectorFilter = new GaussianVectorFilter(
+                5,
+                params.gaussianSigma
+            );
     }
 
     public updatePosition(pos: Vector3, visibility?: number) {
@@ -91,11 +96,15 @@ export type FilteredLandmarkVectorList = FilteredLandmarkVector[];
 export type FilteredLandmarkVector3 = [
     FilteredLandmarkVector,
     FilteredLandmarkVector,
-    FilteredLandmarkVector,
+    FilteredLandmarkVector
 ];
 
-export interface CloneableResults extends Omit<Results, 'segmentationMask' | 'image'> {
-}
+export interface CloneableResults
+    extends Omit<Results, "segmentationMask" | "image"> {}
+
+//* TODO: Mobile patch.
+export interface CloneableFMResults
+    extends Omit<FMResults, "segmentationMask" | "image"> {}
 
 export const POSE_LANDMARK_LENGTH = 33;
 export const FACE_LANDMARK_LENGTH = 478;
@@ -103,15 +112,17 @@ export const HAND_LANDMARK_LENGTH = 21;
 
 export const normalizedLandmarkToVector = (
     l: NormalizedLandmark,
-    scaling = 1.,
-    reverseY = false) => {
+    scaling = 1,
+    reverseY = false
+) => {
     return new Vector3(
         l.x * scaling,
         reverseY ? -l.y * scaling : l.y * scaling,
-        l.z * scaling);
-}
+        l.z * scaling
+    );
+};
 export const vectorToNormalizedLandmark = (l: Vector3): NormalizedLandmark => {
-    return {x: l.x, y: l.y, z: l.z};
+    return { x: l.x, y: l.y, z: l.z };
 };
 
 export const HAND_LANDMARKS = {
@@ -156,12 +167,17 @@ export const HAND_LANDMARKS_BONE_MAPPING = {
     LittleIntermediate: HAND_LANDMARKS.PINKY_PIP,
     LittleDistal: HAND_LANDMARKS.PINKY_DIP,
 };
-export const HAND_LANDMARKS_BONE_REVERSE_MAPPING: { [key: number]: string } = objectFlip(HAND_LANDMARKS_BONE_MAPPING);
+export const HAND_LANDMARKS_BONE_REVERSE_MAPPING: { [key: number]: string } =
+    objectFlip(HAND_LANDMARKS_BONE_MAPPING);
 export type HandBoneMappingKey = keyof typeof HAND_LANDMARKS_BONE_MAPPING;
 
 export function handLandMarkToBoneName(landmark: number, isLeft: boolean) {
-    if (!(landmark in HAND_LANDMARKS_BONE_REVERSE_MAPPING)) throw Error("Wrong landmark given!");
-    return (isLeft ? 'left' : 'right') + HAND_LANDMARKS_BONE_REVERSE_MAPPING[landmark];
+    if (!(landmark in HAND_LANDMARKS_BONE_REVERSE_MAPPING))
+        throw Error("Wrong landmark given!");
+    return (
+        (isLeft ? "left" : "right") +
+        HAND_LANDMARKS_BONE_REVERSE_MAPPING[landmark]
+    );
 }
 
 /*
@@ -188,7 +204,7 @@ export function depthFirstSearch(
             for (let index = 0; index < currentChildren.length; index++) {
                 const child = currentChildren[index];
                 stack.push(child);
-                if (!(parentMap.has(child))) {
+                if (!parentMap.has(child)) {
                     parentMap.set(child, currentNode);
                 }
             }

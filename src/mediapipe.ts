@@ -23,6 +23,12 @@ import {
     StaticText,
     Toggle,
 } from "@mediapipe/control_utils";
+//* TODO: Mobile patch.
+import {
+    Options as FMOptions,
+    Results as FMResults,
+    FaceMesh,
+} from "@mediapipe/face_mesh";
 import {
     FACEMESH_FACE_OVAL,
     FACEMESH_LEFT_EYE,
@@ -100,32 +106,38 @@ export interface HolisticOptions extends Options, OptionMap {
 }
 
 //* TODO: Mobile patch.
-// export const InitHolisticOptions: HolisticOptions = Object.freeze({
-//     selfieMode: true,
-//     modelComplexity: 1,
-//     useCpuInference: false,
-//     cameraOn: true,
-//     smoothLandmarks: true,
-//     enableSegmentation: false,
-//     smoothSegmentation: false,
-//     refineFaceLandmarks: true,
-//     minDetectionConfidence: 0.5,
-//     minTrackingConfidence: 0.55,
-//     effect: 'background',
-// });
 export const InitHolisticOptions: HolisticOptions = Object.freeze({
     selfieMode: true,
-    modelComplexity: 0,
-    useCpuInference: true,
+    modelComplexity: 1,
+    useCpuInference: false,
     cameraOn: true,
-    smoothLandmarks: false,
+    smoothLandmarks: true,
     enableSegmentation: false,
     smoothSegmentation: false,
     refineFaceLandmarks: true,
     minDetectionConfidence: 0.5,
-    minTrackingConfidence: 0.75,
-    effect: "background",
+    minTrackingConfidence: 0.55,
+    effect: 'background',
 });
+export const InitFaceMeshOptions: FMOptions = Object.freeze({
+    maxNumFaces: 1,
+    refineLandmarks: true,
+    minDetectionConfidence: 0.5,
+    minTrackingConfidence: 0.5,
+});
+// export const InitHolisticOptions: HolisticOptions = Object.freeze({
+//     selfieMode: true,
+//     modelComplexity: 0,
+//     useCpuInference: true,
+//     cameraOn: true,
+//     smoothLandmarks: false,
+//     enableSegmentation: false,
+//     smoothSegmentation: false,
+//     refineFaceLandmarks: true,
+//     minDetectionConfidence: 0.5,
+//     minTrackingConfidence: 0.75,
+//     effect: "background",
+// });
 
 export function onResults(
     results: Results,
@@ -409,6 +421,145 @@ export function onResults(
     videoCanvasCtx.restore();
 }
 
+//* TODO: Mobile patch.
+export function onFMResults(
+    results: FMResults,
+    vrmManager: VRMManager,
+    videoCanvasElement: Nullable<HTMLCanvasElement> | undefined,
+    workerPose: Comlink.Remote<Poses>,
+    activeEffect: string,
+    proxiedCallback: ((data: Uint8Array) => void) & Comlink.ProxyMarked,
+    fpsControl: Nullable<FPS>
+): void {
+    // notify loaded.
+    document.body.classList.add("loaded");
+
+    // @ts-ignore: delete camera input to prevent accidental paint
+    delete results.image;
+
+    // Worker process
+    workerPose.processFaceMesh(results).then(async (r) => {
+        if (debugInfo) {
+            const resultFaceMeshIndexLandmarks =
+                await workerPose.faceMeshLandmarkIndexList;
+            const resultFaceMeshLandmarks =
+                await workerPose.faceMeshLandmarkList;
+            debugInfo.updateFaceMeshLandmarkSpheres(
+                resultFaceMeshIndexLandmarks,
+                resultFaceMeshLandmarks
+            );
+        }
+    });
+
+    // Update the frame rate.
+    if (fpsControl) fpsControl.tick();
+
+    // Get canvas context
+    if (!videoCanvasElement) return;
+    const videoCanvasCtx = videoCanvasElement.getContext("2d");
+    if (!videoCanvasCtx) return;
+
+    // Draw the overlays.
+    videoCanvasCtx.save();
+    videoCanvasCtx.clearRect(
+        0,
+        0,
+        videoCanvasElement.width,
+        videoCanvasElement.height
+    );
+
+    // Draw safe area
+    videoCanvasCtx.fillStyle = "rgba(34,34,34,0.5)";
+    videoCanvasCtx.strokeStyle = "red";
+    videoCanvasCtx.lineWidth = 3;
+    const paddingX = 0.04,
+        paddingY = 0.08;
+    videoCanvasCtx.fillRect(
+        videoCanvasElement.width * paddingX,
+        videoCanvasElement.height * paddingY,
+        videoCanvasElement.width * (1 - 2 * paddingX),
+        videoCanvasElement.height * (1 - 2 * paddingY)
+    );
+    videoCanvasCtx.strokeRect(
+        videoCanvasElement.width * paddingX,
+        videoCanvasElement.height * paddingY,
+        videoCanvasElement.width * (1 - 2 * paddingX),
+        videoCanvasElement.height * (1 - 2 * paddingY)
+    );
+
+    if (results.image)
+        videoCanvasCtx.drawImage(
+            results.image,
+            0,
+            0,
+            videoCanvasElement.width,
+            videoCanvasElement.height
+        );
+
+    // Connect elbows to hands. Do this first so that the other graphics will draw
+    // on top of these marks.
+    videoCanvasCtx.lineWidth = 5;
+    if (results.multiFaceLandmarks[0]) {
+        // Face...
+        // drawConnectors(
+        //     videoCanvasCtx, results.faceLandmarks, FACEMESH_TESSELATION,
+        //     {color: '#C0C0C070', lineWidth: 1});
+        drawConnectors(
+            videoCanvasCtx,
+            results.multiFaceLandmarks[0],
+            FACEMESH_RIGHT_IRIS,
+            { color: "rgb(0,217,231)" }
+        );
+        drawConnectors(
+            videoCanvasCtx,
+            results.multiFaceLandmarks[0],
+            FACEMESH_RIGHT_EYE,
+            { color: "rgb(0,217,231)" }
+        );
+        drawConnectors(
+            videoCanvasCtx,
+            results.multiFaceLandmarks[0],
+            FACEMESH_RIGHT_EYEBROW,
+            { color: "rgb(0,217,231)" }
+        );
+        drawConnectors(
+            videoCanvasCtx,
+            results.multiFaceLandmarks[0],
+            FACEMESH_LEFT_IRIS,
+            { color: "rgb(255,138,0)" }
+        );
+        drawConnectors(
+            videoCanvasCtx,
+            results.multiFaceLandmarks[0],
+            FACEMESH_LEFT_EYE,
+            { color: "rgb(255,138,0)" }
+        );
+        drawConnectors(
+            videoCanvasCtx,
+            results.multiFaceLandmarks[0],
+            FACEMESH_LEFT_EYEBROW,
+            { color: "rgb(255,138,0)" }
+        );
+        drawConnectors(
+            videoCanvasCtx,
+            results.multiFaceLandmarks[0],
+            FACEMESH_FACE_OVAL,
+            { color: "#E0E0E0", lineWidth: 5 }
+        );
+        drawConnectors(
+            videoCanvasCtx,
+            results.multiFaceLandmarks[0],
+            FACEMESH_LIPS,
+            {
+                color: "#E0E0E0",
+                lineWidth: 5,
+            }
+        );
+    }
+
+    videoCanvasCtx.restore();
+}
+
 export function setHolisticOptions(
     x: OptionMap,
     videoElement: HTMLVideoElement,
@@ -424,6 +575,12 @@ export function setHolisticOptions(
     }
     activeEffect = options.effect;
     holistic.setOptions(options);
+}
+
+//* TODO: Mobile patch.
+export function setFaceMeshOptions(x: FMOptions, faceMesh: FaceMesh) {
+    const options = x as FMOptions;
+    faceMesh.setOptions(options);
 }
 
 export function createControlPanel(

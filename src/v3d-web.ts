@@ -33,6 +33,12 @@ import {
 
 import { FPS } from "@mediapipe/control_utils";
 import { Holistic, HolisticConfig, Results } from "@mediapipe/holistic";
+//* TODO: Mobile patch.
+import {
+    FaceMesh,
+    Options as FMOptions,
+    Results as FMResults,
+} from "@mediapipe/face_mesh";
 
 import { Poses, poseWrapper } from "./worker/pose-processing";
 import {
@@ -47,6 +53,10 @@ import {
     InitHolisticOptions,
     onResults,
     setHolisticOptions,
+    //* TODO: Mobile patch.
+    InitFaceMeshOptions,
+    setFaceMeshOptions,
+    onFMResults,
 } from "./mediapipe";
 import { VRMManager } from "v3d-core-realbits/dist/src/importer/babylon-vrm-loader/src";
 import { V3DCore } from "v3d-core-realbits/dist/src";
@@ -57,6 +67,12 @@ export interface HolisticState {
     ready: boolean;
     activeEffect: string;
     holisticUpdate: boolean;
+}
+//* TODO: Mobile patch.
+export interface FaceMeshState {
+    ready: boolean;
+    activeEffect: string;
+    faceMeshUpdate: boolean;
 }
 export interface BoneState {
     boneRotations: Nullable<CloneableQuaternionMap>;
@@ -80,7 +96,7 @@ export class V3DWeb {
         bonesNeedUpdate: false,
     };
     private _boneOptions: BoneOptions = {
-        blinkLinkLR: true,
+        blinkLinkLR: false,
         expression: "Neutral",
         irisLockX: false,
         lockFinger: false,
@@ -139,6 +155,26 @@ export class V3DWeb {
         );
     }
 
+    //* TODO: Mobile patch.
+    private readonly faceMesh = new FaceMesh({
+        locateFile: (file) => {
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`;
+        },
+    });
+    private faceMeshState: FaceMeshState = {
+        ready: false,
+        activeEffect: "mask",
+        faceMeshUpdate: false,
+    };
+    private _faceMeshOptions = Object.assign({}, InitFaceMeshOptions);
+    get faceMeshOptions(): FMOptions {
+        return this._faceMeshOptions;
+    }
+    set faceMeshOptions(value: FMOptions) {
+        this._faceMeshOptions = value;
+        setFaceMeshOptions(value, this.faceMesh);
+    }
+
     private _cameraList: MediaDeviceInfo[] = [];
     get cameraList(): MediaDeviceInfo[] {
         return this._cameraList;
@@ -153,6 +189,7 @@ export class V3DWeb {
         private readonly holisticConfig?: HolisticConfig,
         private readonly loadingDiv?: Nullable<HTMLDivElement>,
         private readonly useMotionUpdate?: Nullable<boolean>,
+        private readonly useFaceMesh?: Nullable<boolean>,
         afterInitCallback?: (...args: any[]) => any
     ) {
         // console.log("call constructor()");
@@ -219,9 +256,12 @@ export class V3DWeb {
                 this.boneOptions,
                 this.holistic,
                 this.holisticState,
+                this.faceMesh,
+                this.faceMeshState,
                 this._vrmFile,
                 this.videoElement!,
-                this.useMotionUpdate
+                this.useMotionUpdate,
+                this.useFaceMesh
             ).then((value) => {
                 if (!value) throw Error("VRM Manager initialization failed!");
 
@@ -239,41 +279,67 @@ export class V3DWeb {
                             /**
                              * MediaPipe
                              */
-                            const mainOnResults = (results: Results) => {
-                                // console.log("call mainOnResults()");
+                            //* TODO: Mobile patch.
+                            if (useFaceMesh) {
+                                const mainOnResults = (results: FMResults) => {
+                                    // console.log("call mainOnResults()");
 
-                                if (
-                                    (results as any)?.ea &&
-                                    results.poseLandmarks
-                                ) {
-                                    onResults(
+                                    onFMResults(
                                         results,
                                         vrmManager,
                                         this.videoCanvasElement,
                                         this.workerPose!,
-                                        this.holisticState.activeEffect,
+                                        this.faceMeshState.activeEffect,
                                         this._updateBufferCallback,
                                         this.fpsControl
                                     );
-                                }
-                            };
+                                };
 
-                            this.holistic.initialize().then(() => {
-                                // Set initial options
-                                setHolisticOptions(
-                                    this.holisticOptions,
-                                    this.videoElement!,
-                                    this.holisticState.activeEffect,
-                                    this.holistic
-                                );
+                                this.faceMesh.initialize().then(() => {
+                                    this.faceMesh.onResults(mainOnResults);
+                                    this.faceMeshState.ready = true;
 
-                                this.holistic.onResults(mainOnResults);
-                                this.holisticState.ready = true;
+                                    this.customLoadingScreen?.hideLoadingUI();
 
-                                this.customLoadingScreen?.hideLoadingUI();
+                                    if (afterInitCallback) afterInitCallback();
+                                });
+                            } else {
+                                const mainOnResults = (results: Results) => {
+                                    // console.log("call mainOnResults()");
 
-                                if (afterInitCallback) afterInitCallback();
-                            });
+                                    if (
+                                        (results as any)?.ea &&
+                                        results.poseLandmarks
+                                    ) {
+                                        onResults(
+                                            results,
+                                            vrmManager,
+                                            this.videoCanvasElement,
+                                            this.workerPose!,
+                                            this.holisticState.activeEffect,
+                                            this._updateBufferCallback,
+                                            this.fpsControl
+                                        );
+                                    }
+                                };
+
+                                this.holistic.initialize().then(() => {
+                                    // Set initial options
+                                    setHolisticOptions(
+                                        this.holisticOptions,
+                                        this.videoElement!,
+                                        this.holisticState.activeEffect,
+                                        this.holistic
+                                    );
+
+                                    this.holistic.onResults(mainOnResults);
+                                    this.holisticState.ready = true;
+
+                                    this.customLoadingScreen?.hideLoadingUI();
+
+                                    if (afterInitCallback) afterInitCallback();
+                                });
+                            }
                         });
                     }
                 });
