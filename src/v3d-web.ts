@@ -152,7 +152,7 @@ export class V3DWeb {
         public readonly controlsElement?: Nullable<HTMLDivElement>,
         private readonly holisticConfig?: HolisticConfig,
         private readonly loadingDiv?: Nullable<HTMLDivElement>,
-        private readonly useMotionCapture?: Nullable<boolean>,
+        private readonly useMotionUpdate?: Nullable<boolean>,
         afterInitCallback?: (...args: any[]) => any
     ) {
         // console.log("call constructor()");
@@ -220,7 +220,8 @@ export class V3DWeb {
                 this.holistic,
                 this.holisticState,
                 this._vrmFile,
-                this.videoElement!
+                this.videoElement!,
+                this.useMotionUpdate
             ).then((value) => {
                 if (!value) throw Error("VRM Manager initialization failed!");
 
@@ -243,8 +244,7 @@ export class V3DWeb {
 
                                 if (
                                     (results as any)?.ea &&
-                                    results.poseLandmarks &&
-                                    useMotionCapture === true
+                                    results.poseLandmarks
                                 ) {
                                     onResults(
                                         results,
@@ -302,17 +302,40 @@ export class V3DWeb {
     }
 
     public async getCamera(idx: number) {
+        // console.log("call getCamera()");
+        // console.log("idx: ", idx);
+
+        // const resultGetUserMedia = await navigator.mediaDevices.getUserMedia({
+        //     audio: true,
+        //     video: true,
+        // });
+        // // console.log("result: ", resultGetUserMedia);
+
+        // if (!this.videoElement) throw Error("Video Element not found!");
+        // console.log("this.videoElement: ", this.videoElement);
+        // this.videoElement.srcObject = resultGetUserMedia;
+        // this.videoElement.play();
+
+        // return resultGetUserMedia;
+
         await navigator.mediaDevices
             .getUserMedia({
+                //* TODO: Mobile patch.
+                // audio: true,
+                // video: true,
                 video: {
-                    width: 640,
-                    height: 480,
+                    // width: 640,
+                    // height: 480,
+                    width: 320,
+                    height: 240,
                     deviceId: {
                         exact: this.cameraList[idx].deviceId,
                     },
                 },
             })
             .then((stream) => {
+                // console.log("stream: ", stream);
+
                 if (!this.videoElement) throw Error("Video Element not found!");
                 this.videoElement.srcObject = stream;
                 // let source = document.createElement('source');

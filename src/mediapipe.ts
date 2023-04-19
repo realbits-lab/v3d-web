@@ -21,30 +21,40 @@ import {
     OptionMap,
     Slider,
     StaticText,
-    Toggle
+    Toggle,
 } from "@mediapipe/control_utils";
 import {
     FACEMESH_FACE_OVAL,
-    FACEMESH_LEFT_EYE, FACEMESH_LEFT_EYEBROW,
-    FACEMESH_LEFT_IRIS, FACEMESH_LIPS,
-    FACEMESH_RIGHT_EYE, FACEMESH_RIGHT_EYEBROW,
+    FACEMESH_LEFT_EYE,
+    FACEMESH_LEFT_EYEBROW,
+    FACEMESH_LEFT_IRIS,
+    FACEMESH_LIPS,
+    FACEMESH_RIGHT_EYE,
+    FACEMESH_RIGHT_EYEBROW,
     FACEMESH_RIGHT_IRIS,
     HAND_CONNECTIONS,
     Holistic,
     NormalizedLandmark,
     NormalizedLandmarkList,
-    Options, POSE_CONNECTIONS,
-    POSE_LANDMARKS, POSE_LANDMARKS_LEFT, POSE_LANDMARKS_RIGHT,
-    Results
+    Options,
+    POSE_CONNECTIONS,
+    POSE_LANDMARKS,
+    POSE_LANDMARKS_LEFT,
+    POSE_LANDMARKS_RIGHT,
+    Results,
 } from "@mediapipe/holistic";
-import {Data, drawConnectors, drawLandmarks, lerp} from "@mediapipe/drawing_utils";
-import {Poses} from "./worker/pose-processing";
-import {debugInfo, updateBuffer} from "./core";
-import {Vector3, Nullable} from "@babylonjs/core";
-import {VRMManager} from "v3d-core-realbits/dist/src/importer/babylon-vrm-loader/src";
+import {
+    Data,
+    drawConnectors,
+    drawLandmarks,
+    lerp,
+} from "@mediapipe/drawing_utils";
+import { Poses } from "./worker/pose-processing";
+import { debugInfo, updateBuffer } from "./core";
+import { Vector3, Nullable } from "@babylonjs/core";
+import { VRMManager } from "v3d-core-realbits/dist/src/importer/babylon-vrm-loader/src";
 
-function removeElements(
-    landmarks: NormalizedLandmarkList, elements: number[]) {
+function removeElements(landmarks: NormalizedLandmarkList, elements: number[]) {
     for (const element of elements) {
         delete landmarks[element];
     }
@@ -54,22 +64,25 @@ function removeLandmarks(results: Results) {
     if (results.poseLandmarks) {
         removeElements(
             results.poseLandmarks,
-            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 16, 17, 18, 19, 20, 21, 22]);
+            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 16, 17, 18, 19, 20, 21, 22]
+        );
     }
 }
 
 function connect(
     ctx: CanvasRenderingContext2D,
-    connectors:
-        Array<[NormalizedLandmark, NormalizedLandmark]>):
-    void {
+    connectors: Array<[NormalizedLandmark, NormalizedLandmark]>
+): void {
     const canvas = ctx.canvas;
     for (const connector of connectors) {
         const from = connector[0];
         const to = connector[1];
         if (from && to) {
-            if (from.visibility && to.visibility &&
-                (from.visibility < 0.1 || to.visibility < 0.1)) {
+            if (
+                from.visibility &&
+                to.visibility &&
+                (from.visibility < 0.1 || to.visibility < 0.1)
+            ) {
                 continue;
             }
             ctx.beginPath();
@@ -82,22 +95,36 @@ function connect(
 
 export interface HolisticOptions extends Options, OptionMap {
     cameraOn: boolean;
-    useCpuInference: boolean;    // This is actually official
+    useCpuInference: boolean; // This is actually official
     effect: string;
 }
 
+//* TODO: Mobile patch.
+// export const InitHolisticOptions: HolisticOptions = Object.freeze({
+//     selfieMode: true,
+//     modelComplexity: 1,
+//     useCpuInference: false,
+//     cameraOn: true,
+//     smoothLandmarks: true,
+//     enableSegmentation: false,
+//     smoothSegmentation: false,
+//     refineFaceLandmarks: true,
+//     minDetectionConfidence: 0.5,
+//     minTrackingConfidence: 0.55,
+//     effect: 'background',
+// });
 export const InitHolisticOptions: HolisticOptions = Object.freeze({
     selfieMode: true,
-    modelComplexity: 1,
-    useCpuInference: false,
+    modelComplexity: 0,
+    useCpuInference: true,
     cameraOn: true,
-    smoothLandmarks: true,
+    smoothLandmarks: false,
     enableSegmentation: false,
     smoothSegmentation: false,
     refineFaceLandmarks: true,
     minDetectionConfidence: 0.5,
-    minTrackingConfidence: 0.55,
-    effect: 'background',
+    minTrackingConfidence: 0.75,
+    effect: "background",
 });
 
 export function onResults(
@@ -109,34 +136,48 @@ export function onResults(
     proxiedCallback: ((data: Uint8Array) => void) & Comlink.ProxyMarked,
     fpsControl: Nullable<FPS>
 ): void {
-
     // notify loaded.
-    document.body.classList.add('loaded');
+    document.body.classList.add("loaded");
 
     // @ts-ignore: delete camera input to prevent accidental paint
     delete results.image;
 
     // Worker process
-    workerPose.process(
-        (({segmentationMask, image, ...o}) => o)(results),    // Remove canvas properties
-    )
+    workerPose
+        .process(
+            (({ segmentationMask, image, ...o }) => o)(results) // Remove canvas properties
+        )
         .then(async (r) => {
             if (debugInfo) {
-                const resultPoseLandmarks = await workerPose.cloneablePoseLandmarks;
+                const resultPoseLandmarks =
+                    await workerPose.cloneablePoseLandmarks;
                 const resultFaceNormal = await workerPose.faceNormal;
-                const resultFaceMeshIndexLandmarks = await workerPose.faceMeshLandmarkIndexList;
-                const resultFaceMeshLandmarks = await workerPose.faceMeshLandmarkList;
+                const resultFaceMeshIndexLandmarks =
+                    await workerPose.faceMeshLandmarkIndexList;
+                const resultFaceMeshLandmarks =
+                    await workerPose.faceMeshLandmarkList;
                 const resultLeftHandNormals = await workerPose.leftHandNormals;
-                const resultRightHandNormals = await workerPose.rightHandNormals;
+                const resultRightHandNormals =
+                    await workerPose.rightHandNormals;
                 const resultPoseNormals = await workerPose.poseNormals;
                 debugInfo.updatePoseLandmarkSpheres(resultPoseLandmarks);
                 debugInfo.updateFaceNormalArrows(
-                    [resultFaceNormal], resultPoseLandmarks);
+                    [resultFaceNormal],
+                    resultPoseLandmarks
+                );
                 debugInfo.updateFaceMeshLandmarkSpheres(
-                    resultFaceMeshIndexLandmarks, resultFaceMeshLandmarks);
+                    resultFaceMeshIndexLandmarks,
+                    resultFaceMeshLandmarks
+                );
                 debugInfo.updateHandNormalArrows(
-                    resultLeftHandNormals, resultRightHandNormals, resultPoseLandmarks);
-                debugInfo.updatePoseNormalArrows(resultPoseNormals, resultPoseLandmarks);
+                    resultLeftHandNormals,
+                    resultRightHandNormals,
+                    resultPoseLandmarks
+                );
+                debugInfo.updatePoseNormalArrows(
+                    resultPoseNormals,
+                    resultPoseLandmarks
+                );
             }
 
             workerPose.midHipPos.then((v) => {
@@ -153,55 +194,89 @@ export function onResults(
 
     // Get canvas context
     if (!videoCanvasElement) return;
-    const videoCanvasCtx = videoCanvasElement.getContext('2d');
+    const videoCanvasCtx = videoCanvasElement.getContext("2d");
     if (!videoCanvasCtx) return;
 
     // Draw the overlays.
     videoCanvasCtx.save();
-    videoCanvasCtx.clearRect(0, 0, videoCanvasElement.width, videoCanvasElement.height);
+    videoCanvasCtx.clearRect(
+        0,
+        0,
+        videoCanvasElement.width,
+        videoCanvasElement.height
+    );
 
     // Draw safe area
-    videoCanvasCtx.fillStyle = 'rgba(34,34,34,0.5)';
-    videoCanvasCtx.strokeStyle = 'red';
+    videoCanvasCtx.fillStyle = "rgba(34,34,34,0.5)";
+    videoCanvasCtx.strokeStyle = "red";
     videoCanvasCtx.lineWidth = 3;
-    const paddingX = 0.04, paddingY = 0.08;
-    videoCanvasCtx.fillRect(videoCanvasElement.width * paddingX,
+    const paddingX = 0.04,
+        paddingY = 0.08;
+    videoCanvasCtx.fillRect(
+        videoCanvasElement.width * paddingX,
         videoCanvasElement.height * paddingY,
         videoCanvasElement.width * (1 - 2 * paddingX),
-        videoCanvasElement.height * (1 - 2 * paddingY));
-    videoCanvasCtx.strokeRect(videoCanvasElement.width * paddingX,
+        videoCanvasElement.height * (1 - 2 * paddingY)
+    );
+    videoCanvasCtx.strokeRect(
+        videoCanvasElement.width * paddingX,
         videoCanvasElement.height * paddingY,
         videoCanvasElement.width * (1 - 2 * paddingX),
-        videoCanvasElement.height * (1 - 2 * paddingY));
+        videoCanvasElement.height * (1 - 2 * paddingY)
+    );
 
     if (results.segmentationMask) {
         videoCanvasCtx.drawImage(
-            results.segmentationMask, 0, 0, videoCanvasElement.width,
-            videoCanvasElement.height);
+            results.segmentationMask,
+            0,
+            0,
+            videoCanvasElement.width,
+            videoCanvasElement.height
+        );
 
         // Only overwrite existing pixels.
-        if (activeEffect === 'mask' || activeEffect === 'both') {
-            videoCanvasCtx.globalCompositeOperation = 'source-in';
+        if (activeEffect === "mask" || activeEffect === "both") {
+            videoCanvasCtx.globalCompositeOperation = "source-in";
             // This can be a color or a texture or whatever...
-            videoCanvasCtx.fillStyle = '#00FF007F';
-            videoCanvasCtx.fillRect(0, 0, videoCanvasElement.width, videoCanvasElement.height);
+            videoCanvasCtx.fillStyle = "#00FF007F";
+            videoCanvasCtx.fillRect(
+                0,
+                0,
+                videoCanvasElement.width,
+                videoCanvasElement.height
+            );
         } else {
-            videoCanvasCtx.globalCompositeOperation = 'source-out';
-            videoCanvasCtx.fillStyle = '#0000FF7F';
-            videoCanvasCtx.fillRect(0, 0, videoCanvasElement.width, videoCanvasElement.height);
+            videoCanvasCtx.globalCompositeOperation = "source-out";
+            videoCanvasCtx.fillStyle = "#0000FF7F";
+            videoCanvasCtx.fillRect(
+                0,
+                0,
+                videoCanvasElement.width,
+                videoCanvasElement.height
+            );
         }
 
         // Only overwrite missing pixels.
-        videoCanvasCtx.globalCompositeOperation = 'destination-atop';
+        videoCanvasCtx.globalCompositeOperation = "destination-atop";
         if (results.image)
             videoCanvasCtx.drawImage(
-                results.image, 0, 0, videoCanvasElement.width, videoCanvasElement.height);
+                results.image,
+                0,
+                0,
+                videoCanvasElement.width,
+                videoCanvasElement.height
+            );
 
-        videoCanvasCtx.globalCompositeOperation = 'source-over';
+        videoCanvasCtx.globalCompositeOperation = "source-over";
     } else {
         if (results.image)
             videoCanvasCtx.drawImage(
-                results.image, 0, 0, videoCanvasElement.width, videoCanvasElement.height);
+                results.image,
+                0,
+                0,
+                videoCanvasElement.width,
+                videoCanvasElement.height
+            );
     }
 
     // Connect elbows to hands. Do this first so that the other graphics will draw
@@ -209,57 +284,74 @@ export function onResults(
     videoCanvasCtx.lineWidth = 5;
     if (!!results.poseLandmarks) {
         if (results.rightHandLandmarks) {
-            videoCanvasCtx.strokeStyle = 'white';
-            connect(videoCanvasCtx, [[
-                results.poseLandmarks[POSE_LANDMARKS.RIGHT_ELBOW],
-                results.rightHandLandmarks[0]
-            ]]);
+            videoCanvasCtx.strokeStyle = "white";
+            connect(videoCanvasCtx, [
+                [
+                    results.poseLandmarks[POSE_LANDMARKS.RIGHT_ELBOW],
+                    results.rightHandLandmarks[0],
+                ],
+            ]);
         }
         if (results.leftHandLandmarks) {
-            videoCanvasCtx.strokeStyle = 'white';
-            connect(videoCanvasCtx, [[
-                results.poseLandmarks[POSE_LANDMARKS.LEFT_ELBOW],
-                results.leftHandLandmarks[0]
-            ]]);
+            videoCanvasCtx.strokeStyle = "white";
+            connect(videoCanvasCtx, [
+                [
+                    results.poseLandmarks[POSE_LANDMARKS.LEFT_ELBOW],
+                    results.leftHandLandmarks[0],
+                ],
+            ]);
         }
 
         // Pose...
         drawConnectors(
-            videoCanvasCtx, results.poseLandmarks, POSE_CONNECTIONS,
-            {color: 'white'});
+            videoCanvasCtx,
+            results.poseLandmarks,
+            POSE_CONNECTIONS,
+            { color: "white" }
+        );
         drawLandmarks(
             videoCanvasCtx,
-            Object.values(POSE_LANDMARKS_LEFT)
-                .map(index => results.poseLandmarks[index]),
-            {visibilityMin: 0.55, color: 'white', fillColor: 'rgb(255,138,0)'});
+            Object.values(POSE_LANDMARKS_LEFT).map(
+                (index) => results.poseLandmarks[index]
+            ),
+            { visibilityMin: 0.55, color: "white", fillColor: "rgb(255,138,0)" }
+        );
         drawLandmarks(
             videoCanvasCtx,
-            Object.values(POSE_LANDMARKS_RIGHT)
-                .map(index => results.poseLandmarks[index]),
-            {visibilityMin: 0.55, color: 'white', fillColor: 'rgb(0,217,231)'});
+            Object.values(POSE_LANDMARKS_RIGHT).map(
+                (index) => results.poseLandmarks[index]
+            ),
+            { visibilityMin: 0.55, color: "white", fillColor: "rgb(0,217,231)" }
+        );
 
         // Hands...
         drawConnectors(
-            videoCanvasCtx, results.rightHandLandmarks, HAND_CONNECTIONS,
-            {color: 'white'});
+            videoCanvasCtx,
+            results.rightHandLandmarks,
+            HAND_CONNECTIONS,
+            { color: "white" }
+        );
         drawLandmarks(videoCanvasCtx, results.rightHandLandmarks, {
-            color: 'white',
-            fillColor: 'rgb(0,217,231)',
+            color: "white",
+            fillColor: "rgb(0,217,231)",
             lineWidth: 2,
             radius: (data: Data) => {
-                return lerp(data.from!.z!, -0.15, .1, 10, 1);
-            }
+                return lerp(data.from!.z!, -0.15, 0.1, 10, 1);
+            },
         });
         drawConnectors(
-            videoCanvasCtx, results.leftHandLandmarks, HAND_CONNECTIONS,
-            {color: 'white'});
+            videoCanvasCtx,
+            results.leftHandLandmarks,
+            HAND_CONNECTIONS,
+            { color: "white" }
+        );
         drawLandmarks(videoCanvasCtx, results.leftHandLandmarks, {
-            color: 'white',
-            fillColor: 'rgb(255,138,0)',
+            color: "white",
+            fillColor: "rgb(255,138,0)",
             lineWidth: 2,
             radius: (data: Data) => {
-                return lerp(data.from!.z!, -0.15, .1, 10, 1);
-            }
+                return lerp(data.from!.z!, -0.15, 0.1, 10, 1);
+            },
         });
 
         // Face...
@@ -267,37 +359,64 @@ export function onResults(
         //     videoCanvasCtx, results.faceLandmarks, FACEMESH_TESSELATION,
         //     {color: '#C0C0C070', lineWidth: 1});
         drawConnectors(
-            videoCanvasCtx, results.faceLandmarks, FACEMESH_RIGHT_IRIS,
-            {color: 'rgb(0,217,231)'});
+            videoCanvasCtx,
+            results.faceLandmarks,
+            FACEMESH_RIGHT_IRIS,
+            { color: "rgb(0,217,231)" }
+        );
         drawConnectors(
-            videoCanvasCtx, results.faceLandmarks, FACEMESH_RIGHT_EYE,
-            {color: 'rgb(0,217,231)'});
+            videoCanvasCtx,
+            results.faceLandmarks,
+            FACEMESH_RIGHT_EYE,
+            { color: "rgb(0,217,231)" }
+        );
         drawConnectors(
-            videoCanvasCtx, results.faceLandmarks, FACEMESH_RIGHT_EYEBROW,
-            {color: 'rgb(0,217,231)'});
+            videoCanvasCtx,
+            results.faceLandmarks,
+            FACEMESH_RIGHT_EYEBROW,
+            { color: "rgb(0,217,231)" }
+        );
         drawConnectors(
-            videoCanvasCtx, results.faceLandmarks, FACEMESH_LEFT_IRIS,
-            {color: 'rgb(255,138,0)'});
+            videoCanvasCtx,
+            results.faceLandmarks,
+            FACEMESH_LEFT_IRIS,
+            { color: "rgb(255,138,0)" }
+        );
         drawConnectors(
-            videoCanvasCtx, results.faceLandmarks, FACEMESH_LEFT_EYE,
-            {color: 'rgb(255,138,0)'});
+            videoCanvasCtx,
+            results.faceLandmarks,
+            FACEMESH_LEFT_EYE,
+            { color: "rgb(255,138,0)" }
+        );
         drawConnectors(
-            videoCanvasCtx, results.faceLandmarks, FACEMESH_LEFT_EYEBROW,
-            {color: 'rgb(255,138,0)'});
+            videoCanvasCtx,
+            results.faceLandmarks,
+            FACEMESH_LEFT_EYEBROW,
+            { color: "rgb(255,138,0)" }
+        );
         drawConnectors(
-            videoCanvasCtx, results.faceLandmarks, FACEMESH_FACE_OVAL,
-            {color: '#E0E0E0', lineWidth: 5});
-        drawConnectors(
-            videoCanvasCtx, results.faceLandmarks, FACEMESH_LIPS,
-            {color: '#E0E0E0', lineWidth: 5});
+            videoCanvasCtx,
+            results.faceLandmarks,
+            FACEMESH_FACE_OVAL,
+            { color: "#E0E0E0", lineWidth: 5 }
+        );
+        drawConnectors(videoCanvasCtx, results.faceLandmarks, FACEMESH_LIPS, {
+            color: "#E0E0E0",
+            lineWidth: 5,
+        });
     }
 
     videoCanvasCtx.restore();
 }
 
-export function setHolisticOptions(x: OptionMap, videoElement: HTMLVideoElement, activeEffect: string, holistic: Holistic) {
+export function setHolisticOptions(
+    x: OptionMap,
+    videoElement: HTMLVideoElement,
+    activeEffect: string,
+    holistic: Holistic
+) {
     const options = x as HolisticOptions;
-    videoElement.classList.toggle('selfie', options.selfieMode);
+    videoElement.classList.toggle("selfie", options.selfieMode);
     if (options.cameraOn) {
         videoElement.play();
     } else {
@@ -312,48 +431,52 @@ export function createControlPanel(
     videoElement: HTMLVideoElement,
     controlsElement: HTMLDivElement,
     activeEffect: string,
-    fpsControl: Nullable<FPS>) {
+    fpsControl: Nullable<FPS>
+) {
     if (!controlsElement || !fpsControl) return;
 
     const holisticOptions = Object.assign({}, InitHolisticOptions);
     new ControlPanel(controlsElement, holisticOptions)
         .add([
-            new StaticText({title: 'Options'}),
+            new StaticText({ title: "Options" }),
             fpsControl,
-            new Toggle({title: 'Selfie Mode', field: 'selfieMode'}),
+            new Toggle({ title: "Selfie Mode", field: "selfieMode" }),
             new Slider({
-                title: 'Model Complexity',
-                field: 'modelComplexity',
-                discrete: ['Lite', 'Full', 'Heavy'],
+                title: "Model Complexity",
+                field: "modelComplexity",
+                discrete: ["Lite", "Full", "Heavy"],
             }),
-            new Toggle(
-                {title: 'Use CPU Only', field: 'useCpuInference'}),
-            new Toggle(
-                {title: 'Camera on', field: 'cameraOn'}),
-            new Toggle(
-                {title: 'Smooth Landmarks', field: 'smoothLandmarks'}),
-            new Toggle(
-                {title: 'Enable Segmentation', field: 'enableSegmentation'}),
-            new Toggle(
-                {title: 'Smooth Segmentation', field: 'smoothSegmentation'}),
-            new Toggle(
-                {title: 'Refine Face Landmarks', field: 'refineFaceLandmarks'}),
+            new Toggle({ title: "Use CPU Only", field: "useCpuInference" }),
+            new Toggle({ title: "Camera on", field: "cameraOn" }),
+            new Toggle({ title: "Smooth Landmarks", field: "smoothLandmarks" }),
+            new Toggle({
+                title: "Enable Segmentation",
+                field: "enableSegmentation",
+            }),
+            new Toggle({
+                title: "Smooth Segmentation",
+                field: "smoothSegmentation",
+            }),
+            new Toggle({
+                title: "Refine Face Landmarks",
+                field: "refineFaceLandmarks",
+            }),
             new Slider({
-                title: 'Min Detection Confidence',
-                field: 'minDetectionConfidence',
+                title: "Min Detection Confidence",
+                field: "minDetectionConfidence",
                 range: [0, 1],
-                step: 0.01
+                step: 0.01,
             }),
             new Slider({
-                title: 'Min Tracking Confidence',
-                field: 'minTrackingConfidence',
+                title: "Min Tracking Confidence",
+                field: "minTrackingConfidence",
                 range: [0, 1],
-                step: 0.01
+                step: 0.01,
             }),
             new Slider({
-                title: 'Effect',
-                field: 'effect',
-                discrete: {'background': 'Background', 'mask': 'Foreground'},
+                title: "Effect",
+                field: "effect",
+                discrete: { background: "Background", mask: "Foreground" },
             }),
         ])
         .on((x) => {

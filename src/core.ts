@@ -54,7 +54,8 @@ export async function createScene(
     holistic: Holistic,
     holisticState: HolisticState,
     vrmFile: File | string,
-    videoElement: HTMLVideoElement
+    videoElement: HTMLVideoElement,
+    useMotionUpdate?: Nullable<boolean>
 ): Promise<Nullable<[V3DCore, VRMManager]>> {
     // console.log("call createScene()");
 
@@ -94,6 +95,10 @@ export async function createScene(
 
     // Update functions
     v3DCore.updateBeforeRenderFunction(() => {
+        // console.log("call updateBeforeRenderFunction()");
+        // console.log("holisticState: ", holisticState);
+        // console.log("videoElement: ", videoElement);
+
         // Half input fps. This version of Holistic is heavy on CPU time.
         // Wait until they fix web worker (https://github.com/google/mediapipe/issues/2506).
         if (
@@ -102,12 +107,13 @@ export async function createScene(
             !videoElement.paused &&
             videoElement.readyState > 2
         ) {
+            // console.log("try to call holistic.send()");
             holistic.send({ image: videoElement });
         }
         holisticState.holisticUpdate = !holisticState.holisticUpdate;
     });
     v3DCore.updateAfterRenderFunction(() => {
-        if (boneState.bonesNeedUpdate) {
+        if (boneState.bonesNeedUpdate && useMotionUpdate) {
             updatePose(vrmManager, boneState, boneOptions);
             updateSpringBones(vrmManager);
             boneState.bonesNeedUpdate = false;
