@@ -172,7 +172,7 @@ export class V3DWeb {
     }
     set faceMeshOptions(value: FMOptions) {
         this._faceMeshOptions = value;
-        setFaceMeshOptions(value, this.faceMesh);
+        setFaceMeshOptions(value, this.videoElement!, this.faceMesh);
     }
 
     private _cameraList: MediaDeviceInfo[] = [];
@@ -241,6 +241,11 @@ export class V3DWeb {
             { type: "module" }
         );
         const posesRemote = Comlink.wrap<typeof poseWrapper>(this.worker);
+        //* TODO: Mobile patch.
+        //* TODO: Fix iris bone rotation bug in case of face mesh.
+        if (useFaceMesh) {
+            this._boneOptions.irisLockX = true;
+        }
         const Poses = new posesRemote.poses(
             this.boneOptions,
             this._updateBufferCallback
@@ -296,6 +301,12 @@ export class V3DWeb {
                                 };
 
                                 this.faceMesh.initialize().then(() => {
+                                    setFaceMeshOptions(
+                                        this.faceMeshOptions,
+                                        this.videoElement!,
+                                        this.faceMesh
+                                    );
+
                                     this.faceMesh.onResults(mainOnResults);
                                     this.faceMeshState.ready = true;
 

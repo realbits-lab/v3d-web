@@ -553,11 +553,10 @@ export class Poses {
         this.calcFaceBones();
 
         // Calculate expressions
-        this.calcExpressions();
+        this.calcFMExpressions();
 
         // Post processing
         if (this._boneOptions.irisLockX) {
-            console.log("lock iris");
             this._boneRotations["iris"].set(
                 removeRotationAxisWithCap(
                     cloneableQuaternionToQuaternion(
@@ -883,6 +882,119 @@ export class Poses {
 
     private calcExpressions() {
         if (!this.cloneableInputResults?.faceLandmarks) return;
+
+        const leftTopToMiddle = pointLineDistance(
+            this._keyPoints.left_eye_top.pos,
+            this._keyPoints.left_eye_inner.pos,
+            this._keyPoints.left_eye_outer.pos
+        );
+        const leftTopToBottom = this._keyPoints.left_eye_top.pos
+            .subtract(this._keyPoints.left_eye_bottom.pos)
+            .length();
+        const rightTopToMiddle = pointLineDistance(
+            this._keyPoints.right_eye_top.pos,
+            this._keyPoints.right_eye_inner.pos,
+            this._keyPoints.right_eye_outer.pos
+        );
+        const rightTopToBottom = this._keyPoints.right_eye_top.pos
+            .subtract(this._keyPoints.right_eye_bottom.pos)
+            .length();
+
+        this._blinkBase.updatePosition(
+            new Vector3(
+                Math.log(leftTopToMiddle / leftTopToBottom + 1),
+                Math.log(rightTopToMiddle / rightTopToBottom + 1),
+                0
+            )
+        );
+        let leftRangeOffset = 0;
+        if (this._leftBlinkArr.length() > 4) {
+            leftRangeOffset =
+                this._leftBlinkArr.values.reduce(
+                    (p, c, i) => p + (c - p) / (i + 1),
+                    0
+                ) - Poses.BLINK_RATIO_LOW;
+        }
+        const leftBlink = remapRangeNoCap(
+            this._blinkBase.pos.x,
+            Poses.BLINK_RATIO_LOW + leftRangeOffset,
+            Poses.BLINK_RATIO_HIGH + leftRangeOffset,
+            0,
+            1
+        );
+        this._leftBlinkArr.push(this._blinkBase.pos.x);
+
+        let rightRangeOffset = 0;
+        if (this._rightBlinkArr.length() > 4) {
+            rightRangeOffset =
+                this._rightBlinkArr.values.reduce(
+                    (p, c, i) => p + (c - p) / (i + 1),
+                    0
+                ) - Poses.BLINK_RATIO_LOW;
+        }
+        const rightBlink = remapRangeNoCap(
+            this._blinkBase.pos.y,
+            Poses.BLINK_RATIO_LOW + rightRangeOffset,
+            Poses.BLINK_RATIO_HIGH + rightRangeOffset,
+            0,
+            1
+        );
+        this._rightBlinkArr.push(this._blinkBase.pos.y);
+
+        const blink = this.lRLink(leftBlink, rightBlink);
+
+        this._boneRotations["blink"].set(
+            new Quaternion(leftBlink, rightBlink, blink, 0)
+        );
+
+        const mouthWidth = this._keyPoints.mouth_left.pos
+            .subtract(this._keyPoints.mouth_right.pos)
+            .length();
+        const mouthRange1 = remapRangeWithCap(
+            (this._keyPoints.mouth_top_first.pos
+                .subtract(this._keyPoints.mouth_bottom_first.pos)
+                .length() *
+                Poses.MOUTH_WIDTH_BASELINE) /
+                mouthWidth,
+            Poses.MOUTH_MP_RANGE_LOW,
+            Poses.MOUTH_MP_RANGE_HIGH,
+            0,
+            1
+        );
+        const mouthRange2 = remapRangeWithCap(
+            (this._keyPoints.mouth_top_second.pos
+                .subtract(this._keyPoints.mouth_bottom_second.pos)
+                .length() *
+                Poses.MOUTH_WIDTH_BASELINE) /
+                mouthWidth,
+            Poses.MOUTH_MP_RANGE_LOW,
+            Poses.MOUTH_MP_RANGE_HIGH,
+            0,
+            1
+        );
+        const mouthRange3 = remapRangeWithCap(
+            (this._keyPoints.mouth_top_third.pos
+                .subtract(this._keyPoints.mouth_bottom_third.pos)
+                .length() *
+                Poses.MOUTH_WIDTH_BASELINE) /
+                mouthWidth,
+            Poses.MOUTH_MP_RANGE_LOW,
+            Poses.MOUTH_MP_RANGE_HIGH,
+            0,
+            1
+        );
+        this._boneRotations["mouth"].set(
+            new Quaternion(
+                (mouthRange1 + mouthRange2 + mouthRange3) / 3,
+                0,
+                0,
+                0
+            )
+        );
+    }
+
+    private calcFMExpressions() {
+        if (!this.cloneableFMInputResults?.multiFaceLandmarks[0]) return;
 
         const leftTopToMiddle = pointLineDistance(
             this._keyPoints.left_eye_top.pos,

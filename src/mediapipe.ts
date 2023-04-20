@@ -117,13 +117,25 @@ export const InitHolisticOptions: HolisticOptions = Object.freeze({
     refineFaceLandmarks: true,
     minDetectionConfidence: 0.5,
     minTrackingConfidence: 0.55,
-    effect: 'background',
+    effect: "background",
 });
 export const InitFaceMeshOptions: FMOptions = Object.freeze({
+    enableFaceGeometry: false,
+    selfieMode: true,
     maxNumFaces: 1,
     refineLandmarks: true,
     minDetectionConfidence: 0.5,
     minTrackingConfidence: 0.5,
+
+    // cameraNear?: number;
+    // cameraFar?: number;
+    // cameraVerticalFovDegrees?: number;
+    // enableFaceGeometry?: boolean;
+    // selfieMode?: boolean;
+    // maxNumFaces?: number;
+    // refineLandmarks?: boolean;
+    // minDetectionConfidence?: number;
+    // minTrackingConfidence?: number;
 });
 // export const InitHolisticOptions: HolisticOptions = Object.freeze({
 //     selfieMode: true,
@@ -578,8 +590,13 @@ export function setHolisticOptions(
 }
 
 //* TODO: Mobile patch.
-export function setFaceMeshOptions(x: FMOptions, faceMesh: FaceMesh) {
+export function setFaceMeshOptions(
+    x: FMOptions,
+    videoElement: HTMLVideoElement,
+    faceMesh: FaceMesh
+) {
     const options = x as FMOptions;
+    videoElement.classList.toggle("selfie", options.selfieMode);
     faceMesh.setOptions(options);
 }
 

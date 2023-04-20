@@ -233,6 +233,8 @@ export function updatePose(
             break;
     }
 
+    // console.log("resultBoneRotations: ", resultBoneRotations);
+    // console.log("boneOptions: ", boneOptions);
     if (boneOptions.blinkLinkLR) {
         vrmManager.morphing("Blink", resultBoneRotations["blink"].z);
     } else {
@@ -240,12 +242,14 @@ export function updatePose(
         vrmManager.morphing("Blink_R", resultBoneRotations["blink"].y);
     }
 
-    if (vrmManager.humanoidBone.leftEye)
-        vrmManager.humanoidBone.leftEye.rotationQuaternion =
-            cloneableQuaternionToQuaternion(resultBoneRotations["iris"]);
-    if (vrmManager.humanoidBone.rightEye)
-        vrmManager.humanoidBone.rightEye.rotationQuaternion =
-            cloneableQuaternionToQuaternion(resultBoneRotations["iris"]);
+    if (boneOptions.irisLockX === false) {
+        if (vrmManager.humanoidBone.leftEye)
+            vrmManager.humanoidBone.leftEye.rotationQuaternion =
+                cloneableQuaternionToQuaternion(resultBoneRotations["iris"]);
+        if (vrmManager.humanoidBone.rightEye)
+            vrmManager.humanoidBone.rightEye.rotationQuaternion =
+                cloneableQuaternionToQuaternion(resultBoneRotations["iris"]);
+    }
 
     for (const d of LR) {
         for (const k of Object.keys(HAND_LANDMARKS_BONE_MAPPING)) {
